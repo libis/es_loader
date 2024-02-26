@@ -1,0 +1,24 @@
+version: '3'
+services:
+
+  es_loader_dev:
+    image: es_loader_dev
+    build: 
+      context: ./
+      dockerfile: Dockerfile
+    command: >
+      sh -c "cd /app
+             tail -f /dev/null"
+    networks: 
+      - data_network
+    volumes:
+      - ./config:/app/config
+      - ./elastic:/app/elastic
+      - ./src:/app/src
+      - ../../iCANDID/records:/records
+      - ../../iCANDID/records_test:/records_test
+      - ../../iCANDID/es_loader/logs:/app/logs
+
+networks:
+  data_network:
+    driver: bridge

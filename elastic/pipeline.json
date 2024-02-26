@@ -1,0 +1,46 @@
+{
+  "description" : "Create fields with language specific subfield",
+  "processors": [
+    {
+      "set": {
+        "field": "updatetime",
+        "value": "{{_ingest.timestamp}}"
+      }
+    },
+    {
+      "set": {
+        "field": "sdDatePublished",
+        "value": "{{_ingest.timestamp}}"
+      }
+    },
+    {
+      "set": {
+        "field": "sdPublisher",
+        "value": {"@type":"Organization","@id":"iCANDID","name":"Interdisciplinaire en Cross-Culturele Discoursanalyse Vervolledigd met Data Mining Tools","location":"Belgium"}
+      }
+    },
+    {
+      "set": {
+        "field": "sdLicense",
+        "value": "https://creativecommons.org/licenses/"
+      }
+    },
+    {
+      "set": {
+        "field": "url",
+        "value": "https://icandid.libis.be/#/record/{{{ @id }}}"
+      }
+    },
+    {
+      "script": {
+        "id": "langaugeField"
+      }
+    },
+    {
+      "script": {
+        "lang": "painless",
+        "source": "DateFormat df = new SimpleDateFormat(\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\"); df.setTimeZone(TimeZone.getTimeZone(\"UTC\"));Date date = new Date(); ctx.processtime = df.format(date);"
+      }
+    }
+  ]
+}

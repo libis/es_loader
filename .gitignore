@@ -1,0 +1,5 @@
+.env.json
+.env2.json
+volumes/*
+notes.txt
+config/*
