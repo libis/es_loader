@@ -80,7 +80,7 @@ class Loader
     @logger               = Logger.new(@log_file)
 
     @log_es_client        = false
-    @client_logger        = Logger.new('./logs/es_client.log')
+    @client_logger        = Logger.new('../logs/es_client.log')
 
     @config_file          = "config.yml"
 
@@ -97,12 +97,15 @@ class Loader
     @mandatory_config     = []
 
     @record_dirs_to_load  = []
+
     @record_pattern       = /.*\.json/
 
     @temp_output_dir      = "/elastic/import/#{ENV["HOSTNAME"]}"
     @temp_output_file     = "import.bulk"
 
     @jsonoutput           = []
+
+    @rule_set             = nil    
 
     @es_version           = nil
     @es_url               = nil
@@ -256,10 +259,9 @@ END_OF_MESSAGE
     end
   end
 
-
+  
   def update_bulk
     begin
-
       unless @direct_load 
         create_import_directory()
       end
@@ -268,6 +270,7 @@ END_OF_MESSAGE
       @current_alias = get_current_alias()
       @logger.info "current alias for #{ @es_index } is #{@current_alias}"
 
+      @logger.info "record_id_file_pattern #{ @record_id_file_pattern }"
 
       if @record_id_file_pattern.nil?
         load_bulk()
@@ -348,7 +351,7 @@ END_OF_MESSAGE
 
       @logger.info "Reindex to index #{new_index}"
 
-    # task_id =  @es_client.reindex(body: { source: { index: @current_alias }, dest: { index: new_index } }, wait_for_completion: false, refresh: true)['task']
+      # task_id =  @es_client.reindex(body: { source: { index: @current_alias }, dest: { index: new_index } }, wait_for_completion: false, refresh: true)['task']
       task_id =  @es_client.reindex(body: { source: { index: @current_alias, size: 300  }, dest: { index: new_index, pipeline: @es_pipeline_id } }, wait_for_completion: false, requests_per_second: 300, refresh: true)['task']
 
       @logger.info "Reindex => task_id: #{task_id}"
@@ -393,6 +396,127 @@ END_OF_MESSAGE
       raise e
     end
   end
+
+  def load_enrichtment
+    begin
+      @total_nr_of_bulk_files = 0
+      @total_nr_of_processed_files = 0
+
+
+      check_elastic()
+      @current_alias = get_current_alias()
+      @logger.info "current alias for #{ @es_index } is #{@current_alias}"
+
+      lastrun = Time.parse(@last_run_updates)
+      @logger.debug "lastrun        : #{ lastrun}"
+      @logger.debug "@direct_load   : #{ @direct_load}"
+      @logger.debug "@last_run_updates : #{@last_run_updates}"
+      @logger.debug "@es_index         : #{@es_index}"
+      @logger.debug "@es_pipeline_id   : #{@es_pipeline_id}"
+      @logger.debug "@record_dirs_to_load  : #{ @record_dirs_to_load}"
+      @logger.debug "@record_pattern   : #{ @record_pattern}"
+      @logger.debug "@current_alias    : #{ @current_alias}"
+
+      @record_dirs_to_load.each do |records_dir|
+        @logger.info "Start processing files in #{records_dir} [#{lastrun} < File.mtime]"
+
+        files = Dir["#{records_dir}/**/*"].select {|x| x =~ @record_pattern } 
+     
+        @logger.info " number of files to process  : #{files.size} "
+
+        @nr_of_processed_files = 0
+        @nr_of_old_files = 0
+        @nr_of_bulk_files = 0
+
+        unless files.size == 0
+          @jsonoutput = []
+          new_files_in_this_bulk = []
+          files.each do |jsonfile|
+            if lastrun < File.mtime(jsonfile) 
+              # @logger.debug jsonfile
+             
+              data = JSON.parse( File.read("#{jsonfile}") )
+
+              options = { :enrichment => data }
+
+              #pp data
+    
+              new_files_in_this_bulk << jsonfile if jsonfile =~ /\/new\//
+
+              es_doc = get_document_by_id( index: @current_alias , id: "#{data['_source']['@id']}" )
+
+              if es_doc.nil?
+                pp "#{data['_source']['@id']} RECORDS NOT FOUND in #{@current_alias}"
+                exit
+              end
+              @logger.info "doc_id : #{es_doc['@id']} "
+
+              rules_ng.run(  @conf[:rule_set].constantize[:rs_records], es_doc, output, options )
+
+              jsondata =  output[:records]
+
+              # pp jsondata['@id']
+              @jsonoutput << {"index":{
+                "_index": @current_alias,
+                "pipeline": @es_pipeline_id,
+                "_id": jsondata['@id']
+                }}
+
+              @jsonoutput << jsondata
+
+              @nr_of_processed_files += 1
+
+              if @nr_of_processed_files > 0 && @nr_of_processed_files % @max_records_per_file == 0
+                process_bulk()
+                move_records(new_files_in_this_bulk)
+                new_files_in_this_bulk = []
+                @jsonoutput = []
+              end
+            else
+              @nr_of_old_files += 1
+            end 
+          end
+
+          process_bulk()
+          move_records(new_files_in_this_bulk)
+          if files.size != (@nr_of_processed_files+ @nr_of_old_files)
+              raise "While parsing #{records_dir}\n Number of files to process difference from the number of records that has been loaded to ElasticSearch !\n"
+          end
+          @logger.debug "End processing files in #{records_dir}"
+          @total_nr_of_processed_files += @nr_of_processed_files
+        end
+      end
+
+      if @total_nr_of_processed_files > 0
+        @logger.info "Total number of processed files : #{@total_nr_of_processed_files} chopped in #{@total_nr_of_bulk_files} pieces"
+      else
+        @logger.info "There was nothing to load or create !"
+      end
+      
+    rescue StandardError => e
+      @logger.error e
+      raise e
+    end
+  end
+  def move_records(new_files_in_this_bulk)
+    begin
+      unless new_files_in_this_bulk.nil?
+        new_files_in_this_bulk.each do |file|
+          puts file
+          FileUtils.mkdir_p(File.dirname( file.gsub('/new/', '/processed/')  ))
+          FileUtils.mv(file, file.gsub('/new/', '/processed/'))
+        end
+      end
+    rescue StandardError => e
+      @logger.error e
+      raise e
+    end
+  end
+
+
+
+
+
   private
 
   def create_import_directory
@@ -444,7 +568,6 @@ END_OF_MESSAGE
         @jsonoutput = []
         
         unless files.size == 0
-          
 
           #files_ids = files.map{ |f| File.basename( f, '.json' ).gsub(/iCANDID_twitter_([^\-\.]*).*/, '\1') }
           #files_ids.uniq!.sort!
@@ -622,6 +745,10 @@ END_OF_MESSAGE
       raise e
     end
   end
+
+
+
+
   def move_records(new_files_in_this_bulk)
     begin
       unless new_files_in_this_bulk.nil?

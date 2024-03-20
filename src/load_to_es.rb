@@ -37,9 +37,9 @@ begin
   case loader.load_type
   when "update"
   
-      #last_run = DateTime.parse(@last_run_updates).to_time
+    #last_run = DateTime.parse(@last_run_updates).to_time
     last_run = loader.last_run_updates
-  
+
     #total_nr_of_bulk_files = 0
     loader.logger.info "update ES config last run : #{last_run}"
     
@@ -67,6 +67,25 @@ begin
     end
   
     loader.reindex()
+
+  when "enrichtment"
+
+    Dir[ "./rules/*.rb" ].each {|file| require file; }
+ 
+    last_run = loader.last_run_updates
+
+    #total_nr_of_bulk_files = 0
+    loader.logger.info "update ES config last run : #{last_run}"
+
+    if config[:rule_set].nil?
+      message = "loading enrichments requires a rule_set to parse the enrichment and combine it with the records from Elastic"
+      loader.logger.warn message
+      loader.logger.warn "add :rule_set: to config.yml"
+      message = message + "\nadd :rule_set: to config.yml"
+      raise message
+    end
+
+    loader.load_enrichtment()
 
   else
     message = "Wrong option for load_type it must be update, reload or reindex" 

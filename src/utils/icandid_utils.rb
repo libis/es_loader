@@ -13,6 +13,16 @@ require 'date'
 #end
 
 ONLY_ONE_VALUE_ALLOWED = ["name","headline","articleBody","description"]
+CONTEXT = { "@context" => {
+              "@vocab" => "https://schema.org/",
+              "prov:wasAssociatedFor" => {
+                "@reverse" => "prov:wasAssociatedWith"
+              },
+              "@language" => "nl-Latn",
+              "prov" => "https://www.w3.org/ns/prov#"
+            }
+          }
+
 
 def default_options
   { 
@@ -117,119 +127,126 @@ end
 
 def create_record(jsondata)
 
-    if jsondata['@context'].is_a? String 
-        jsondata['@context'] = [ jsondata['@context'] , "@language": "nl" ]
-    end
+  if jsondata['@context'].nil?
+    raise "jsondata['@context'] is nil !"
+  end
 
-    fromprocessingtime = Time.now.strftime("%Y-%m-%d %H:%M:%S")
-    
-    jsondata['processingtime'] = "#{ Time.now.strftime("%Y-%m-%d %H:%M:%S") }"
+  if jsondata['@context'].is_a? String
+    jsondata['@context'] = [ jsondata['@context'] , "@language": "nl" ]
+  end
 
-    jsondata["@context"][0] = { "schema": "schema.org" }
-    lang = jsondata["@context"][1]["@language"] || "nl"
+  fromprocessingtime = Time.now.strftime("%Y-%m-%d %H:%M:%S")
 
+  jsondata['processingtime'] = "#{ Time.now.strftime("%Y-%m-%d %H:%M:%S") }"
 
-    unless jsondata["author"].nil? 
-        if jsondata["creator"].nil?
-            jsondata["creator"] = jsondata["author"]
-            jsondata.delete("author")
-        end
-    end
+  jsondata["@context"][0] = { "schema": "schema.org" }
 
-    unless  jsondata["citation"].nil?
-        jsondata["citation"]["@context"][0] = { "schema": "schema.org" }
-        unless  jsondata["citation"]["citation"].nil?
-            jsondata["citation"].delete("citation") 
-        end 
-    end
+  if jsondata["@context"].is_a?(Array)
+      lang = jsondata["@context"][1]["@language"] || "nl"
+  else
+      lang = jsondata["@context"]["@language"] || nl
+  end
 
+  unless jsondata["author"].nil? 
+      if jsondata["creator"].nil?
+          jsondata["creator"] = jsondata["author"]
+          jsondata.delete("author")
+      end
+  end
 
-    unless @es_index == "icandid_twitter_sets_v2"
-      checkLangauge( jsondata, 'text', lang )
-    end
-    checkLangauge( jsondata, 'name', lang )
-    checkLangauge( jsondata, 'keywords', lang )
+  unless  jsondata["citation"].nil?
+      jsondata["citation"]["@context"][0] = { "schema": "schema.org" }
+      unless  jsondata["citation"]["citation"].nil?
+          jsondata["citation"].delete("citation") 
+      end 
+  end
 
-    if jsondata['datePublished'].is_a?(Array)
-        datePublished =  jsondata['datePublished'][0]
-    else
-        datePublished = jsondata['datePublished'] 
-    end 
+  unless @es_index == "icandid_twitter_sets_v2"
+    checkLangauge( jsondata, 'text', lang )
+  end
+  checkLangauge( jsondata, 'name', lang )
+  checkLangauge( jsondata, 'keywords', lang )
 
-    unless datePublished.nil?
-        if (datePublished =~ /^.*([0-9UX?]{4}-[0-9UX?]{4}).*$/)
-            datePublished = datePublished[/^.*([0-9UX?]{4}-[0-9UX?]{4}).*$/,1]
-        end
+  if jsondata['datePublished'].is_a?(Array)
+      datePublished =  jsondata['datePublished'][0]
+  else
+      datePublished = jsondata['datePublished'] 
+  end 
 
-        if (datePublished =~ /^[0-9UX?]{4}-[0-9UX?]{4}$/) 
-            fromyear = parseDate( datePublished[0, 4],"0");
-            tillyear = parseDate( datePublished[5, 9],"9");
-        end
+  unless datePublished.nil?
+      if (datePublished =~ /^.*([0-9UX?]{4}-[0-9UX?]{4}).*$/)
+          datePublished = datePublished[/^.*([0-9UX?]{4}-[0-9UX?]{4}).*$/,1]
+      end
 
-        if (datePublished =~ /^[0-9UX?]{4}$/) 
-            fromyear = parseDate( datePublished[0, 4],"0");
-            tillyear = parseDate( datePublished[0, 4],"9");
-        end
+      if (datePublished =~ /^[0-9UX?]{4}-[0-9UX?]{4}$/) 
+          fromyear = parseDate( datePublished[0, 4],"0");
+          tillyear = parseDate( datePublished[5, 9],"9");
+      end
 
-        if !fromyear.nil? && !tillyear.nil?
-            datePublished_time_frame = ["gte": "0000"];
-            datePublished_time_frame = {
-                "gte" => fromyear ,
-                "lte" => tillyear  
-            }
-        end
-        datePublished_time_frame = {
-            "gte" => datePublished ,
-            "lte" => datePublished  
-        }
+      if (datePublished =~ /^[0-9UX?]{4}$/) 
+          fromyear = parseDate( datePublished[0, 4],"0");
+          tillyear = parseDate( datePublished[0, 4],"9");
+      end
 
-        jsondata['datePublished_time_frame'] = datePublished_time_frame
+      if !fromyear.nil? && !tillyear.nil?
+          datePublished_time_frame = ["gte": "0000"];
+          datePublished_time_frame = {
+              "gte" => fromyear ,
+              "lte" => tillyear  
+          }
+      end
+      datePublished_time_frame = {
+          "gte" => datePublished ,
+          "lte" => datePublished  
+      }
 
-        jsondata['datePublished'] = "#{ (DateTime.parse( datePublished )).strftime("%Y-%m-%d") }"
-    end
+      jsondata['datePublished_time_frame'] = datePublished_time_frame
 
-    if jsondata['dateCreated'].is_a?(Array)
-        dateCreated =  jsondata['dateCreated'][0]
-    else
-        dateCreated = jsondata['dateCreated'] 
-    end 
+      jsondata['datePublished'] = "#{ (DateTime.parse( datePublished )).strftime("%Y-%m-%d") }"
+  end
 
-    unless dateCreated.nil?
-        if (dateCreated =~ /^.*([0-9UX?]{4}-[0-9UX?]{4}).*$/)
-            dateCreated = dateCreated[/^.*([0-9UX?]{4}-[0-9UX?]{4}).*$/,1]
-        end
+  if jsondata['dateCreated'].is_a?(Array)
+      dateCreated =  jsondata['dateCreated'][0]
+  else
+      dateCreated = jsondata['dateCreated'] 
+  end 
 
-        if (dateCreated =~ /^[0-9UX?]{4}-[0-9UX?]{4}$/) 
-            fromyear = parseDate( dateCreated[0, 4],"0");
-            tillyear = parseDate( dateCreated[5, 9],"9");
-        end
+  unless dateCreated.nil?
+      if (dateCreated =~ /^.*([0-9UX?]{4}-[0-9UX?]{4}).*$/)
+          dateCreated = dateCreated[/^.*([0-9UX?]{4}-[0-9UX?]{4}).*$/,1]
+      end
 
-        if (dateCreated =~ /^[0-9UX?]{4}$/) 
-            fromyear = parseDate( dateCreated[0, 4],"0");
-            tillyear = parseDate( dateCreated[0, 4],"9");
-        end
+      if (dateCreated =~ /^[0-9UX?]{4}-[0-9UX?]{4}$/) 
+          fromyear = parseDate( dateCreated[0, 4],"0");
+          tillyear = parseDate( dateCreated[5, 9],"9");
+      end
 
-        if !fromyear.nil? && !tillyear.nil?
-            dateCreated_time_frame = ["gte": "0000"];
-            dateCreated_time_frame = {
-                "gte" => fromyear ,
-                "lte" => tillyear  
-            }
-        end
-        jsondata['dateCreated_time_frame'] = dateCreated_time_frame
-    end
+      if (dateCreated =~ /^[0-9UX?]{4}$/) 
+          fromyear = parseDate( dateCreated[0, 4],"0");
+          tillyear = parseDate( dateCreated[0, 4],"9");
+      end
 
-    tillprocessingtime = Time.now.strftime("%Y-%m-%d %H:%M:%S")
-    processingtime_time_frame = {
-        "gte" => fromprocessingtime ,
-        "lte" => tillprocessingtime 
-    }
-    jsondata['processingtime_time_frame'] = processingtime_time_frame
+      if !fromyear.nil? && !tillyear.nil?
+          dateCreated_time_frame = ["gte": "0000"];
+          dateCreated_time_frame = {
+              "gte" => fromyear ,
+              "lte" => tillyear  
+          }
+      end
+      jsondata['dateCreated_time_frame'] = dateCreated_time_frame
+  end
 
-    jsondata.reject!{ |j| j.empty? || j.nil? }
-    jsondata.reject!{ |k,v| v.nil? || v.to_s.empty? }
+  tillprocessingtime = Time.now.strftime("%Y-%m-%d %H:%M:%S")
+  processingtime_time_frame = {
+      "gte" => fromprocessingtime ,
+      "lte" => tillprocessingtime 
+  }
+  jsondata['processingtime_time_frame'] = processingtime_time_frame
 
-    return jsondata
+  jsondata.reject!{ |j| j.empty? || j.nil? }
+  jsondata.reject!{ |k,v| v.nil? || v.to_s.empty? }
+
+  return jsondata
 
 end
 
@@ -259,6 +276,9 @@ def merge_json(data_array)
           outputdata.merge!(data) do |key, v1, v2|
             #puts "inspect v1 #{v1.inspect}"
             #puts "inspect v2 #{v2.inspect}"
+            if !v1.nil? && v2.nil?
+              v2 = v1
+            end
             if v1 == v2
               # puts "equal #{key}"
               v1

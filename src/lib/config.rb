@@ -51,7 +51,7 @@ class Config
   def self.init
     discover_config_file_path
     if @config.empty?
-      config = YAML::load_file("#{path}/#{config_file}")
+      config = YAML::load_file("#{path}/#{config_file}", permitted_classes: [Symbol, Regexp])
       @config = process(config)
     end
   end

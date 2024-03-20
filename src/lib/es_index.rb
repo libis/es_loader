@@ -79,7 +79,7 @@ class Loader
     retval = @es_client.indices.get_settings( index: index)
     if retval['errors']
         log.error retval
-        raise "Errors in mapping: #{retval['errors']}"
+        raise "Errors in get settings: #{retval['errors']}"
     else
       retval[index]["settings"]
     end
@@ -95,6 +95,17 @@ class Loader
     end
   end
 
+  def get_es_mappings (index)
+    @logger.info "Get mappings of index: #{index}"
+
+    retval = @es_client.indices.get_mapping index: index
+    if retval['errors']
+        log.error retval
+        raise "Errors in get mappings: #{retval['errors']}"
+      else
+        retval[index]["mappings"]        
+    end
+  end
 
 
 
@@ -105,7 +116,7 @@ class Loader
     retval = @es_client.indices.put_mapping index: index, body: jsonmappings
     if retval['errors']
         log.error retval
-        raise "Errors in mapping: #{retval['errors']}"
+        raise "Errors set mapping: #{retval['errors']}"
     end
   end
 
@@ -151,8 +162,7 @@ class Loader
   def load_to_es(jsondata, client, logger)
     unless jsondata.empty? 
 
-
-#      puts JSON.pretty_generate(jsondata)
+      # puts JSON.pretty_generate(jsondata)
 
       logger.debug "load records to Elastic #{jsondata.size / 2}"
       retval = client.bulk body: jsondata
