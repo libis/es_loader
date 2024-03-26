@@ -130,6 +130,10 @@ class Loader
     @command_line_options.each{ |o,v|
       instance_variable_set("@#{o}", v)
     }
+    if @log_file == "stdout" || @log_file == "STDOUT"
+      @log_file = STDOUT
+    end
+
     @logger = Logger.new(@log_file)
     @logger.debug("config_file: #{ @config_file} " )
     @logger.debug("log_file: #{ @log_file} " )
@@ -601,16 +605,24 @@ END_OF_MESSAGE
             new_files_in_this_bulk.concat files_to_process.select { |f| f =~ /\/new\// } 
 
             jsondata = preprocess_records( files_to_process.sort)
-            jsondata = create_record(jsondata)
+
 
             # Retrieve the records from ES and merge if it exists
             # only necessary if a record can be part of multipe datasets
             # or if the record is not completely loaded (example reftweets from twitter)
+            
+            doc_id = get_document_by_id( index: @current_alias , id: jsondata['@id'] )
+            unless doc_id.nil?
+              puts "retrieved from elastic #{ jsondata['@id'] }"
+              unless  doc_id["uuid"].nil?
+                jsondata['uuid'] = doc_id["uuid"]
+              end
+            end
 
-            if jsondata['@id'].start_with?('iCANDID_twitter_')
-              doc_id = get_document_by_id( index: @current_alias , id: jsondata['@id'] )
-              unless doc_id.nil?
-                puts "retrieved from elastic #{jsondata['@id'] }"
+            jsondata = create_record(jsondata)            
+
+            unless doc_id.nil?
+              if jsondata['@id'].start_with?('iCANDID_twitter_')
                 jsondata = merge_json([jsondata,doc_id])
                 jsondata["author"].select!{ |p| p["@id"] == jsondata_from_file["author"]["@id"] } if jsondata["author"].size > 1
                 jsondata["creator"].select!{ |p| p["@id"] == jsondata_from_file["creator"]["@id"] } if jsondata["creator"].size > 1

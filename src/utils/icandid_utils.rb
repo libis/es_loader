@@ -2,6 +2,7 @@
 $LOAD_PATH << '.' << './lib'
 
 require 'net/smtp'
+require "http"
 require 'logger'
 require 'fileutils'
 require 'json'
@@ -22,6 +23,7 @@ CONTEXT = { "@context" => {
               "prov" => "https://www.w3.org/ns/prov#"
             }
           }
+UUID_URL_PREFIX = "https://icandid.libis.be/_/"
 
 
 def default_options
@@ -138,8 +140,8 @@ def create_record(jsondata)
   fromprocessingtime = Time.now.strftime("%Y-%m-%d %H:%M:%S")
 
   jsondata['processingtime'] = "#{ Time.now.strftime("%Y-%m-%d %H:%M:%S") }"
-
   jsondata["@context"][0] = { "schema": "schema.org" }
+
 
   if jsondata["@context"].is_a?(Array)
       lang = jsondata["@context"][1]["@language"] || "nl"
@@ -161,9 +163,6 @@ def create_record(jsondata)
       end 
   end
 
-  unless @es_index == "icandid_twitter_sets_v2"
-    checkLangauge( jsondata, 'text', lang )
-  end
   checkLangauge( jsondata, 'name', lang )
   checkLangauge( jsondata, 'keywords', lang )
 
@@ -245,6 +244,16 @@ def create_record(jsondata)
 
   jsondata.reject!{ |j| j.empty? || j.nil? }
   jsondata.reject!{ |k,v| v.nil? || v.to_s.empty? }
+
+  #pp jsondata.keys
+    
+  jsondata = add_ids( jsondata )
+  jsondata = add_uuid( jsondata )
+
+  #pp jsondata["actor"]
+  
+  pp jsondata
+  exit
 
   return jsondata
 
@@ -349,3 +358,55 @@ def merge_json(data_array)
     end
     convert_hash_keys(data)
 end
+
+
+def add_ids( data, id = nil)
+  propertylist = [ "name", "roleName", "characterName",  "url" ]
+  if id.nil?
+    id = data["@id"]
+  end
+  if data.is_a?(Hash)
+    data.map { |k, d|
+      [ k, add_ids(d, id) ] 
+    }.to_h
+    if !data["@type"].nil? && data["@id"].nil? 
+      propertylist.map! { |p| data[p] }
+      val_to_hash = propertylist.compact.first
+      if val_to_hash.nil?
+        pp data
+        exit
+      end
+      # pp "#{id}_#{data["@type"].upcase}_#{Digest::MD5.hexdigest(val_to_hash)}"
+      data["@id"] = "#{id}_#{data["@type"].upcase}_#{ Digest::MD5.hexdigest(val_to_hash) }"
+    end
+  end
+  if data.is_a?(Array)
+    data.map! do |d|
+      add_ids( d, id)
+    end
+  end
+  data
+end
+
+def add_uuid( data)
+ 
+  unless data["@id"].nil?
+   
+    uuid_url = "#{@config[:uuid_config][:url]}/#{data["@id"]}?by=#{@config[:uuid_config][:by]}&for=#{@config[:uuid_config][:for]}&resolvable=#{@config[:uuid_config][:resolvable]}"
+    uuid_generator_response = HTTP.get(uuid_url)
+
+    if uuid_generator_response.status == 201
+      uuid = uuid_generator_response.parse
+    end
+    if uuid_generator_response.status ==400
+      uuid = uuid_generator_response.parse["uuid"]
+    end
+    
+    data["uuid"] = uuid
+    data["url"] = URI::join(UUID_URL_PREFIX, uuid).to_s
+
+  end
+
+  data
+end
+
