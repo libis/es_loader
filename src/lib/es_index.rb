@@ -159,6 +159,18 @@ class Loader
     end
   end
 
+  def search( index: @current_alias, body: { query: { match_all: {} } } )
+    retval = @es_client.search ({index: index, body: body } )
+
+    if retval["took"]
+      retval
+    else
+      nil
+    end
+  end
+
+
+
   def load_to_es(jsondata, client, logger)
     unless jsondata.empty? 
 
