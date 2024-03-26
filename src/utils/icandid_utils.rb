@@ -252,9 +252,6 @@ def create_record(jsondata)
 
   #pp jsondata["actor"]
   
-  pp jsondata
-  exit
-
   return jsondata
 
 end
