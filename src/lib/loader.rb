@@ -256,8 +256,7 @@ Date: #{ now }
 #{report}
 
 END_OF_MESSAGE
-
-    Net::SMTP.start('smtp.kuleuven.be', 25) do |smtp|
+    Net::SMTP.start('smtp.kuleuven.be', 25, tls_verify: false) do |smtp|
         smtp.send_message message,
         from_address, to_address
     end
