@@ -1,0 +1,27 @@
+---
+:es_version: 7.5.0
+:es_url: http://host.docker.internal:9200
+:es_cluster: iCANDID
+:es_index: icandid_local
+:es_pipeline_id: fix_icandid_data
+:log_es_client: true
+:log_file: "./logs/es_test_loader.log"
+:load_type: update
+:max_records_per_file: 300
+:last_run_updates: '2021-01-01 01:01:01 +0100'
+:record_dirs_to_load:
+- "ENA"
+- "GoPress"
+- "Twitter"
+:record_pattern: !ruby/regexp /.*\.json/
+:import_mappings: "/elastic/mappings.json"
+:import_settings: "/elastic/settings.json"
+:import_pipeline: "/elastic/pipeline.json"
+:audit:
+  :mailfrom: icandid@example.com
+  :mailto: tom@example.com
+:uuid_config:
+  :url: "https://example/uuid/generate"
+  :by: "tech@example.org"
+  :for: "TEST"
+  :resolvable: 1
