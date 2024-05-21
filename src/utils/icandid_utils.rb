@@ -164,6 +164,7 @@ def create_record(jsondata)
   end
 
   checkLangauge( jsondata, 'name', lang )
+  checkLangauge( jsondata, 'text', lang )
   checkLangauge( jsondata, 'keywords', lang )
 
   if jsondata['datePublished'].is_a?(Array)
@@ -173,10 +174,13 @@ def create_record(jsondata)
   end 
 
   unless datePublished.nil?
+
+    begin
+      
       if (datePublished =~ /^.*([0-9UX?]{4}-[0-9UX?]{4}).*$/)
           datePublished = datePublished[/^.*([0-9UX?]{4}-[0-9UX?]{4}).*$/,1]
       end
-
+      
       if (datePublished =~ /^[0-9UX?]{4}-[0-9UX?]{4}$/) 
           fromyear = parseDate( datePublished[0, 4],"0");
           tillyear = parseDate( datePublished[5, 9],"9");
@@ -188,20 +192,30 @@ def create_record(jsondata)
       end
 
       if !fromyear.nil? && !tillyear.nil?
-          datePublished_time_frame = ["gte": "0000"];
-          datePublished_time_frame = {
-              "gte" => fromyear ,
-              "lte" => tillyear  
-          }
+        jsondata['datePublished'] = "#{ (DateTime.parse( "#{fromyear}-01-01" )).strftime("%Y-%m-%d") }" 
+        datePublished_time_frame = ["gte": "0000"];
+        datePublished_time_frame = {
+            "gte" => fromyear ,
+            "lte" => tillyear  
+        }
+      else
+        jsondata['datePublished'] = "#{ (DateTime.parse( datePublished )).strftime("%Y-%m-%d") }" 
+        datePublished_time_frame = {
+          "gte" => jsondata['datePublished']  ,
+          "lte" => jsondata['datePublished']   
+        }
       end
-      datePublished_time_frame = {
-          "gte" => datePublished ,
-          "lte" => datePublished  
-      }
-
+      
       jsondata['datePublished_time_frame'] = datePublished_time_frame
 
-      jsondata['datePublished'] = "#{ (DateTime.parse( datePublished )).strftime("%Y-%m-%d") }"
+    rescue StandardError => e
+      pp "ERROR Parsing datePublished #{e}  [ #{datePublished} ] in ( #{ jsondata['@id']  } ) "
+      jsondata['datePublished'] = nil
+      jsondata['datePublished_time_frame'] = nil
+
+      jsondata.compact
+    end
+
   end
 
   if jsondata['dateCreated'].is_a?(Array)
@@ -233,6 +247,15 @@ def create_record(jsondata)
           }
       end
       jsondata['dateCreated_time_frame'] = dateCreated_time_frame
+      
+      begin
+        jsondata['dateCreated'] = "#{ (DateTime.parse( dateCreated )).strftime("%Y-%m-%d") }"  
+      rescue StandardError => e
+        pp "ERROR Parsing dateCreated #{e}  [ #{dateCreated} ] "
+        jsondata['dateCreated'] = nil
+        jsondata['dateCreated_time_frame'] = nil
+      end
+
   end
 
   tillprocessingtime = Time.now.strftime("%Y-%m-%d %H:%M:%S")
@@ -283,9 +306,10 @@ def merge_json(data_array)
             #puts "inspect v1 #{v1.inspect}"
             #puts "inspect v2 #{v2.inspect}"
             if !v1.nil? && v2.nil?
-              v2 = v1
-            end
-            if v1 == v2
+              v1
+            elsif v1.nil? && !v2.nil?
+              v2
+            elsif v1 == v2
               # puts "equal #{key}"
               v1
             else
@@ -332,8 +356,12 @@ def merge_json(data_array)
                     v2.uniqBeginString
                   end
                 elsif v2.is_a?(Hash)
-                  if v2.has_key?("@value")  && v2.has_key?("@language")
-                    raise "COMP v1 #{v1} v2@value #{v2["@value"]} )"
+                  if v2.has_key?("@value") && v2.has_key?("@language")
+                    if v1.is_a?(String) 
+                      raise "COMP v1 (string) #{v1} \n v2@value #{v2["@value"]} )"
+                    else
+                      raise "COMP v1 #{v1} \n v2@value #{v2["@value"]} )"
+                    end
                   else
                     raise "Can't merge a #{v2.inspect} to a hash! (v1 string? class #{v1.class} )"
                   end
@@ -358,7 +386,8 @@ end
 
 
 def add_ids( data, id = nil)
-  propertylist = [ "name", "roleName", "characterName",  "url" ]
+  property_list = [ "name", "roleName", "characterName",  "url" ]
+  excluded_types_list = [ "InteractionCounter" ]
   if id.nil?
     id = data["@id"]
   end
@@ -367,14 +396,19 @@ def add_ids( data, id = nil)
       [ k, add_ids(d, id) ] 
     }.to_h
     if !data["@type"].nil? && data["@id"].nil? 
-      propertylist.map! { |p| data[p] }
-      val_to_hash = propertylist.compact.first
-      if val_to_hash.nil?
-        pp data
-        exit
+      unless excluded_types_list.include?(data["@type"])
+        property_list.map! { |p| data[p] }
+        val_to_md5_hash = property_list.compact.first
+        if val_to_md5_hash.nil?
+          pp data
+          exit
+        end
+        if val_to_md5_hash.is_a?(Array)
+          val_to_md5_hash = val_to_md5_hash.sort.first
+        end
+        # pp "#{id}_#{data["@type"].upcase}_#{Digest::MD5.hexdigest(val_to_md5_hash)}"
+        data["@id"] = "#{id}_#{data["@type"].upcase}_#{ Digest::MD5.hexdigest(val_to_md5_hash) }"
       end
-      # pp "#{id}_#{data["@type"].upcase}_#{Digest::MD5.hexdigest(val_to_hash)}"
-      data["@id"] = "#{id}_#{data["@type"].upcase}_#{ Digest::MD5.hexdigest(val_to_hash) }"
     end
   end
   if data.is_a?(Array)
@@ -399,7 +433,7 @@ def add_uuid( data)
       uuid = uuid_generator_response.parse["uuid"]
     end
     
-    data["uuid"] = uuid
+    data["@uuid"] = uuid
     data["url"] = URI::join(UUID_URL_PREFIX, uuid).to_s
 
   end

@@ -1,4 +1,5 @@
-FROM ruby:3.0.0
+FROM ruby:3.1.4
+
 
 # Install gems
 ENV APP_HOME /app

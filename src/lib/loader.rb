@@ -613,19 +613,47 @@ END_OF_MESSAGE
             doc_id = get_document_by_id( index: @current_alias , id: jsondata['@id'] )
             unless doc_id.nil?
               puts "retrieved from elastic #{ jsondata['@id'] }"
-              unless  doc_id["uuid"].nil?
-                jsondata['uuid'] = doc_id["uuid"]
+              unless doc_id["@uuid"].nil?
+                jsondata['@uuid'] = doc_id["@uuid"]
               end
             end
 
-            jsondata = create_record(jsondata)            
+            jsondata_from_file = jsondata.clone
 
+            jsondata = create_record(jsondata)            
             unless doc_id.nil?
               if jsondata['@id'].start_with?('iCANDID_twitter_')
                 jsondata = merge_json([jsondata,doc_id])
-                jsondata["author"].select!{ |p| p["@id"] == jsondata_from_file["author"]["@id"] } if jsondata["author"].size > 1
-                jsondata["creator"].select!{ |p| p["@id"] == jsondata_from_file["creator"]["@id"] } if jsondata["creator"].size > 1
-                jsondata["sender"].select!{ |p| p["@id"] == jsondata_from_file["sender"]["@id"] } if jsondata["sender"].size > 1
+
+
+                if jsondata["author"].is_a?(Array) && jsondata["author"].size > 1
+                  jsondata["author"].select!{ |p|
+                    if jsondata_from_file["author"].is_a?(Array)
+                      jsondata_from_file["author"].map{|a| a["@id"]}.include?(p["@id"])
+                    else
+                      p["@id"] == jsondata_from_file["author"]["@id"]
+                    end
+                  }
+                end
+                if jsondata["creator"].is_a?(Array) && jsondata["creator"].size > 1
+                  jsondata["creator"].select!{ |p|
+                    if jsondata_from_file["creator"].is_a?(Array)
+                      jsondata_from_file["creator"].map{|a| a["@id"]}.include?(p["@id"])
+                    else
+                      p["@id"] == jsondata_from_file["creator"]["@id"]
+                    end
+                  }
+                end
+                if jsondata["sender"].is_a?(Array) && jsondata["sender"].size > 1
+                  jsondata["sender"].select!{ |p|
+                    if jsondata_from_file["sender"].is_a?(Array)
+                      jsondata_from_file["sender"].map{|a| a["@id"]}.include?(p["@id"])
+                    else
+                      p["@id"] == jsondata_from_file["sender"]["@id"]
+                    end
+                  }
+                end
+
                 jsondata = create_record(jsondata)
               end
             end
