@@ -9,12 +9,28 @@ services:
     command: >
       sh -c "cd /app
              tail -f /dev/null"
+    env_file:
+      - .env_loader
     networks: 
       - data_network
     volumes:
       - ./config:/app/config
       - ./elastic:/app/elastic
       - ./src:/app/src
+      - ../../iCANDID/records:/records
+      - ../../iCANDID/records_test:/records_test
+      - ../../iCANDID/es_loader/logs:/app/logs
+
+
+  es_loader:
+    image: registry.docker.libis.be/libis/es_loader:v7.5.0_20240326
+    networks: 
+      - data_network
+    env_file:
+      - .env_loader      
+    volumes:
+      - ./config:/app/config
+      - ./logs:/app/logs/
       - ../../iCANDID/records:/records
       - ../../iCANDID/records_test:/records_test
       - ../../iCANDID/es_loader/logs:/app/logs

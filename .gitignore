@@ -5,3 +5,4 @@ notes.txt
 config/*
 !config/example_config.yml
 src/test/*
+/.env_loader
