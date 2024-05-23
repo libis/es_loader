@@ -46,6 +46,11 @@ class Config
     @config.include?(key)
   end
 
+  def self.keys
+    init
+    @config.keys
+  end
+
   private
 
   def self.init
@@ -75,7 +80,6 @@ class Config
 #      config.delete(k)
       new_config.store(k.to_sym, v)
     end
-
     new_config
   end
 end

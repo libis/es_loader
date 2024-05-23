@@ -33,6 +33,9 @@ class Loader
   require 'time'
   require 'optparse'
   require 'elasticsearch'
+  require 'data_collector'
+
+  include DataCollector::Core
 
   #Common classes
   #require_relative './reires_utils'
@@ -91,7 +94,7 @@ class Loader
 
     @max_records_per_file = MAX_RESULTS_LIMIT
     @load_type            = "update"   # possible values: update, reload, reindex
-#    @mandatory_config     = [@record_dirs_to_load,@record_pattern,@es_url,@es_version,@es_index,@es_pipeline_id,@es_cluster] 
+    #    @mandatory_config     = [@record_dirs_to_load,@record_pattern,@es_url,@es_version,@es_index,@es_pipeline_id,@es_cluster] 
 
     @record_id_file_pattern = nil
     @mandatory_config     = []
@@ -105,7 +108,7 @@ class Loader
 
     @jsonoutput           = []
 
-    @rule_set             = nil    
+    @rule_set             = nil
 
     @es_version           = nil
     @es_url               = nil
@@ -354,7 +357,7 @@ END_OF_MESSAGE
 
       @logger.info "Reindex to index #{new_index}"
 
-      # task_id =  @es_client.reindex(body: { source: { index: @current_alias }, dest: { index: new_index } }, wait_for_completion: false, refresh: true)['task']
+    # task_id =  @es_client.reindex(body: { source: { index: @current_alias }, dest: { index: new_index } }, wait_for_completion: false, refresh: true)['task']
       task_id =  @es_client.reindex(body: { source: { index: @current_alias, size: 300  }, dest: { index: new_index, pipeline: @es_pipeline_id } }, wait_for_completion: false, requests_per_second: 300, refresh: true)['task']
 
       @logger.info "Reindex => task_id: #{task_id}"
@@ -400,7 +403,15 @@ END_OF_MESSAGE
     end
   end
 
+  
   def load_enrichtment
+    # Read json-records from @record_dirs_to_load
+    # expects these records to contain _source.@id
+    # retrieves the records from Elastic Index based on _source.@id and places them in es_doc
+    # add json-record as an enrichment data to options
+    # rules_ng.run(  @conf[:rule_set].constantize[:rs_records], es_doc, output, options )
+    # add output to @jsonoutput and load the enriched records to Elastic Index with process_bulk()
+
     begin
       @total_nr_of_bulk_files = 0
       @total_nr_of_processed_files = 0
@@ -441,18 +452,23 @@ END_OF_MESSAGE
               data = JSON.parse( File.read("#{jsonfile}") )
 
               options = { :enrichment => data }
-
-              #pp data
     
               new_files_in_this_bulk << jsonfile if jsonfile =~ /\/new\//
 
               es_doc = get_document_by_id( index: @current_alias , id: "#{data['_source']['@id']}" )
-
+             
               if es_doc.nil?
                 pp "#{data['_source']['@id']} RECORDS NOT FOUND in #{@current_alias}"
                 exit
               end
               @logger.info "doc_id : #{es_doc['@id']} "
+
+             
+              options[:rule_set] = @config[:enrichment][:rule_set]
+
+              @config[:enrichment][:options].each { |k,v|
+                options[k] = v  
+              }
 
               rules_ng.run(  @conf[:rule_set].constantize[:rs_records], es_doc, output, options )
 
@@ -467,24 +483,17 @@ END_OF_MESSAGE
 
               @jsonoutput << jsondata
 
+              # Enrichments can affect the same record. therefore, each record must be re-added to the index before the next enrichment can be added
+
               @nr_of_processed_files += 1
 
-              if @nr_of_processed_files > 0 && @nr_of_processed_files % @max_records_per_file == 0
-                process_bulk()
-                move_records(new_files_in_this_bulk)
-                new_files_in_this_bulk = []
-                @jsonoutput = []
-              end
-            else
-              @nr_of_old_files += 1
-            end 
+              process_bulk()
+              move_records(new_files_in_this_bulk)
+              new_files_in_this_bulk = []
+              @jsonoutput = []
+            end
           end
 
-          process_bulk()
-          move_records(new_files_in_this_bulk)
-          if files.size != (@nr_of_processed_files+ @nr_of_old_files)
-              raise "While parsing #{records_dir}\n Number of files to process difference from the number of records that has been loaded to ElasticSearch !\n"
-          end
           @logger.debug "End processing files in #{records_dir}"
           @total_nr_of_processed_files += @nr_of_processed_files
         end
