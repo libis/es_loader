@@ -12,6 +12,7 @@ GOOGLE_AI_RULE_SET_v1_0 = {
             records = DataCollector::Output.new
             rules_ng.run(GOOGLE_AI_RULE_SET_v1_0[:rs_record], d, records, o)
 
+            records[:records]["associatedMedia"] = [ records[:records]["associatedMedia"] ] unless records[:records]["associatedMedia"].is_a?(Array)
             records[:records]["associatedMedia"].map! { |a| 
                 a["hasPart"].map!{ |hp| 
                     if Regexp.new( o["enrichment"]["@id"].split('_')[1..].join('_')  ) =~ hp["identifier"]["value"] 
@@ -52,51 +53,54 @@ GOOGLE_AI_RULE_SET_v1_0 = {
             # What to do with the new values in "prov:generated"
             # add to existing of replace ?
             # ToDo  enrichment[:data]["prov:wasAttributedTo"].nil?  ????
+            # ==>  enrichment[:data].nil ==> Must "prov:wasAttributedTo" be deleted ?
 
-            enrichment[:data]["prov:wasAttributedTo"] = [enrichment[:data]["prov:wasAttributedTo"]] unless enrichment[:data]["prov:wasAttributedTo"].is_a?(Array)
+            unless enrichment[:data].nil?
+                enrichment[:data]["prov:wasAttributedTo"] = [enrichment[:data]["prov:wasAttributedTo"]] unless enrichment[:data]["prov:wasAttributedTo"].is_a?(Array)
 
-            if d["prov:wasAttributedTo"]
-                d["prov:wasAttributedTo"] = [ d["prov:wasAttributedTo"]  ] unless d["prov:wasAttributedTo"].is_a?(Array)
+                if d["prov:wasAttributedTo"]
+                    d["prov:wasAttributedTo"] = [ d["prov:wasAttributedTo"]  ] unless d["prov:wasAttributedTo"].is_a?(Array)
 
-                enrichment[:data]["prov:wasAttributedTo"].each do |enrich_wasAttributedTo|
-                    enrich_wasAttributedTo["prov:wasAssociatedFor"].each do |enrich_wasAssociatedFor|
-                        enrichment_processed = false 
+                    enrichment[:data]["prov:wasAttributedTo"].each do |enrich_wasAttributedTo|
+                        enrich_wasAttributedTo["prov:wasAssociatedFor"].each do |enrich_wasAssociatedFor|
+                            enrichment_processed = false 
 
-                        d["prov:wasAttributedTo"].map! { |prov_wasattributerto|
+                            d["prov:wasAttributedTo"].map! { |prov_wasattributerto|
 
-                            if prov_wasattributerto["@id"] == enrich_wasAttributedTo["@id"]
+                                if prov_wasattributerto["@id"] == enrich_wasAttributedTo["@id"]
 
-                                prov_wasattributerto["prov:wasAssociatedFor"].map! {  |prov_wasssociatedfor| 
+                                    prov_wasattributerto["prov:wasAssociatedFor"].map! {  |prov_wasssociatedfor| 
 
-                                    if prov_wasssociatedfor["@id"] == enrich_wasAssociatedFor["@id"]
+                                        if prov_wasssociatedfor["@id"] == enrich_wasAssociatedFor["@id"]
 
-                                        enrich_wasAssociatedFor["prov:generated"].concat prov_wasssociatedfor["prov:generated"]
-                                        enrich_wasAssociatedFor["prov:generated"].uniq!
+                                            enrich_wasAssociatedFor["prov:generated"].concat prov_wasssociatedfor["prov:generated"]
+                                            enrich_wasAssociatedFor["prov:generated"].uniq!
 
+                                            enrichment_processed = true
+                                        
+                                            prov_wasssociatedfor = enrich_wasAssociatedFor
+                                        end
+                                        prov_wasssociatedfor
+                                    }
+                                    
+                                    unless enrichment_processed
                                         enrichment_processed = true
-                                       
-                                        prov_wasssociatedfor = enrich_wasAssociatedFor
+                                        prov_wasattributerto["prov:wasAssociatedFor"] << enrich_wasAssociatedFor
                                     end
-                                    prov_wasssociatedfor
-                                }
-                                
-                                unless enrichment_processed
-                                    enrichment_processed = true
-                                    prov_wasattributerto["prov:wasAssociatedFor"] << enrich_wasAssociatedFor
                                 end
+                                prov_wasattributerto 
+                            }
+
+                            unless enrichment_processed
+                                enrichment_processed = true
+                                d["prov:wasAttributedTo"] << enrich_wasAttributedTo
                             end
-                            prov_wasattributerto 
-                        }
 
-                        unless enrichment_processed
-                            enrichment_processed = true
-                            d["prov:wasAttributedTo"] << enrich_wasAttributedTo
                         end
-
                     end
+                else
+                    d["prov:wasAttributedTo"] = enrichment[:data]["prov:wasAttributedTo"]
                 end
-            else
-                d["prov:wasAttributedTo"] = enrichment[:data]["prov:wasAttributedTo"]
             end
 
             d

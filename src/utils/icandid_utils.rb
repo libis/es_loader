@@ -14,15 +14,15 @@ require 'date'
 #end
 
 ONLY_ONE_VALUE_ALLOWED = ["name","headline","articleBody","description"]
-CONTEXT = { "@context" => {
+CONTEXT = {
               "@vocab" => "https://schema.org/",
               "prov:wasAssociatedFor" => {
                 "@reverse" => "prov:wasAssociatedWith"
               },
               "@language" => "nl-Latn",
               "prov" => "https://www.w3.org/ns/prov#"
-            }
           }
+          
 UUID_URL_PREFIX = "https://icandid.libis.be/_/"
 
 
@@ -129,26 +129,51 @@ end
 
 def create_record(jsondata)
 
+######################
+=begin
+/icandid/icandid_shared/volumes/records/VlaamsParlement/vlpar_opendata_query_0000001/backlog/2012/10/iCANDID_vlaamsparlement_vlpar_opendata_query_0000001_1039457-00000.json
+  "@context": [
+  "http://schema.org",
+  {
+    "@language": "nl-Latn"
+  }
+]
+
+/icandid/icandid_shared/volumes/records/BelgaPress/belgapress_query_00002/processed/2022/11/18/iCANDID_belgapress_belgapress_query_00002_bcaf0c58-cd67-4d6f-b11e-d927a87d7d59-00000.json
+  "@context": [
+    "http://schema.org",
+    {
+      "@language": "fr-Latn"
+    }
+  ],
+
+=end
+######################
+
   if jsondata['@context'].nil?
     raise "jsondata['@context'] is nil !"
   end
 
+  lang = "nl-Latn"
+
   if jsondata['@context'].is_a? String
-    jsondata['@context'] = [ jsondata['@context'] , "@language": "nl" ]
+    jsondata['@context'] = [ jsondata['@context'] , "@language": "nl-Latn" ]
   end
-
-  fromprocessingtime = Time.now.strftime("%Y-%m-%d %H:%M:%S")
-
-  jsondata['processingtime'] = "#{ Time.now.strftime("%Y-%m-%d %H:%M:%S") }"
-  jsondata["@context"][0] = { "schema": "schema.org" }
-
-
+ 
   if jsondata["@context"].is_a?(Array)
-      lang = jsondata["@context"][1]["@language"] || "nl"
-  else
-      lang = jsondata["@context"]["@language"] || nl
+    lang = jsondata["@context"].map { |c| c["@language"] }.compact.first
   end
 
+  if jsondata["@context"].is_a?(Hash)
+    lang = jsondata["@context"]["@language"] 
+  end
+
+  jsondata["@context"] = CONTEXT
+  jsondata["@context"]["@language"] = lang
+ 
+  fromprocessingtime = Time.now.strftime("%Y-%m-%d %H:%M:%S")
+  jsondata['processingtime'] = "#{ Time.now.strftime("%Y-%m-%d %H:%M:%S") }"
+  
   unless jsondata["author"].nil? 
       if jsondata["creator"].nil?
           jsondata["creator"] = jsondata["author"]
@@ -157,7 +182,7 @@ def create_record(jsondata)
   end
 
   unless  jsondata["citation"].nil?
-      jsondata["citation"]["@context"][0] = { "schema": "schema.org" }
+      jsondata["citation"]["@context"] = CONTEXT
       unless  jsondata["citation"]["citation"].nil?
           jsondata["citation"].delete("citation") 
       end 
