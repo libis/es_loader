@@ -12,21 +12,23 @@ GOOGLE_AI_RULE_SET_v1_0 = {
             records = DataCollector::Output.new
             rules_ng.run(GOOGLE_AI_RULE_SET_v1_0[:rs_record], d, records, o)
 
-            records[:records]["associatedMedia"] = [ records[:records]["associatedMedia"] ] unless records[:records]["associatedMedia"].is_a?(Array)
-            records[:records]["associatedMedia"].map! { |a| 
-                a["hasPart"].map!{ |hp| 
-                    if Regexp.new( o["enrichment"]["@id"].split('_')[1..].join('_')  ) =~ hp["identifier"]["value"] 
+            if records[:records].has_key?( "associatedMedia" ) 
+                records[:records]["associatedMedia"] = [ records[:records]["associatedMedia"] ] unless records[:records]["associatedMedia"].is_a?(Array)
+                records[:records]["associatedMedia"].map! { |a| 
+                    a["hasPart"].map!{ |hp| 
+                        if Regexp.new( o["enrichment"]["@id"].split('_')[1..].join('_')  ) =~ hp["identifier"]["value"] 
 
-                        o["itemListElement"] = ["url"]
+                            o["itemListElement"] = ["url"]
 
-                        records_hp = DataCollector::Output.new
-                        rules_ng.run(GOOGLE_AI_RULE_SET_v1_0[:rs_record], hp, records_hp, o)
-                        hp = records_hp[:records]
-                    end
-                    hp
-                };
-                a
-            } 
+                            records_hp = DataCollector::Output.new
+                            rules_ng.run(GOOGLE_AI_RULE_SET_v1_0[:rs_record], hp, records_hp, o)
+                            hp = records_hp[:records]
+                        end
+                        hp
+                    };
+                    a
+                } 
+            end
 
             records[:records]
         } }

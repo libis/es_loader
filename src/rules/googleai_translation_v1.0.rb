@@ -10,6 +10,7 @@ GOOGLE_AI_TRANLATION_v1_0 = {
     version: "1.0",
     rs_data_enrichment: {
         data: { "$._translation" => [ lambda { |d,o|  
+            generatedAtTime = o["enrichment"]["file_generatedAtTime"] || DateTime.now
 
             # d["additionalType"] = o["additionalType"]
             {
@@ -31,7 +32,7 @@ GOOGLE_AI_TRANLATION_v1_0 = {
                                 "url": "https://cloud.google.com/translate/docs/languages"
                                 }
                             ],
-                            "prov:generatedAtTime": "2024-02-28T18:46:05.935418",
+                            "prov:generatedAtTime": generatedAtTime,
                             "@type": [
                                 "prov:Activity",
                                 "action"
