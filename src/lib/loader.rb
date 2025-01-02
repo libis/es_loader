@@ -405,10 +405,10 @@ END_OF_MESSAGE
 
   
   def load_enrichtment
-    # Read json-records from @record_dirs_to_load
-    # expects these records to contain _source.@id
+    # Read json-records (enrichment) from @record_dirs_to_load
+    # expects these enrichment-records to contain _source.@id of the records that must be enriched
     # retrieves the records from Elastic Index based on _source.@id and places them in es_doc
-    # add json-record as an enrichment data to options
+    # The enrichment-records in json-format is passed to the rule as options[:enrichment]
     # rules_ng.run(  @conf[:rule_set].constantize[:rs_records], es_doc, output, options )
     # add output to @jsonoutput and load the enriched records to Elastic Index with process_bulk()
 
@@ -458,7 +458,7 @@ END_OF_MESSAGE
               es_doc = get_document_by_id( index: @current_alias , id: "#{data['_source']['@id']}" )
              
               if es_doc.nil?
-                pp "#{data['_source']['@id']} RECORDS NOT FOUND in #{@current_alias}"
+                pp "#{data['_source']['@id']} RECORD NOT FOUND in #{@current_alias}"
                 exit
               end
               @logger.info "doc_id : #{es_doc['@id']} "

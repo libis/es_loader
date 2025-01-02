@@ -10,7 +10,14 @@ GOOGLE_AI_RULE_SET_v1_0 = {
     rs_records: {
         records: { "@" => lambda { |d,o|  
             records = DataCollector::Output.new
+
+            # d => the record from ES
+            # o["enrichment"] the record (from disk) that will be added as enrichment
+
             rules_ng.run(GOOGLE_AI_RULE_SET_v1_0[:rs_record], d, records, o)
+
+=begin
+This was added if the enrichments should be part of a specific associatedMedia object instead of the entire record
 
             if records[:records].has_key?( "associatedMedia" ) 
                 records[:records]["associatedMedia"] = [ records[:records]["associatedMedia"] ] unless records[:records]["associatedMedia"].is_a?(Array)
@@ -18,7 +25,7 @@ GOOGLE_AI_RULE_SET_v1_0 = {
                     a["hasPart"].map!{ |hp| 
                         if Regexp.new( o["enrichment"]["@id"].split('_')[1..].join('_')  ) =~ hp["identifier"]["value"] 
 
-                            o["itemListElement"] = ["url"]
+                            o["enrichment_is_based_on"] = ["url"]
 
                             records_hp = DataCollector::Output.new
                             rules_ng.run(GOOGLE_AI_RULE_SET_v1_0[:rs_record], hp, records_hp, o)
@@ -29,7 +36,7 @@ GOOGLE_AI_RULE_SET_v1_0 = {
                     a
                 } 
             end
-
+=end
             records[:records]
         } }
     },

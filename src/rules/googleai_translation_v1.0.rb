@@ -20,7 +20,7 @@ GOOGLE_AI_TRANLATION_v1_0 = {
                         {
                             "prov:used": [
                                 {
-                                "itemListElement": o["itemListElement"],
+                                "itemListElement": o["enrichment_is_based_on"],
                                 "@type": "itemListElement",
                                 "name": "Used fields from the attributed entity",
                                 "description": "list of fields from the record that are used in this enrichment process",

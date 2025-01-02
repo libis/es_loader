@@ -19,6 +19,7 @@ CONTEXT = {
               "prov:wasAssociatedFor" => {
                 "@reverse" => "prov:wasAssociatedWith"
               },
+              # "ownedBy": { "@reverse": "https://schema.org/owns" },
               "@language" => "nl-Latn",
               "prov" => "https://www.w3.org/ns/prov#"
           }
@@ -128,27 +129,6 @@ def convert_hash_keys(value)
 end
 
 def create_record(jsondata)
-
-######################
-=begin
-/icandid/icandid_shared/volumes/records/VlaamsParlement/vlpar_opendata_query_0000001/backlog/2012/10/iCANDID_vlaamsparlement_vlpar_opendata_query_0000001_1039457-00000.json
-  "@context": [
-  "http://schema.org",
-  {
-    "@language": "nl-Latn"
-  }
-]
-
-/icandid/icandid_shared/volumes/records/BelgaPress/belgapress_query_00002/processed/2022/11/18/iCANDID_belgapress_belgapress_query_00002_bcaf0c58-cd67-4d6f-b11e-d927a87d7d59-00000.json
-  "@context": [
-    "http://schema.org",
-    {
-      "@language": "fr-Latn"
-    }
-  ],
-
-=end
-######################
 
   if jsondata['@context'].nil?
     raise "jsondata['@context'] is nil !"
@@ -411,7 +391,7 @@ end
 
 
 def add_ids( data, id = nil)
-  property_list = [ "name", "roleName", "characterName",  "url" ]
+  property_list = [ "name", "roleName", "characterName",  "url", "embedUrl" ]
   excluded_types_list = [ "InteractionCounter" ]
   if id.nil?
     id = data["@id"]
@@ -454,7 +434,7 @@ def add_uuid( data)
     if uuid_generator_response.status == 201
       uuid = uuid_generator_response.parse
     end
-    if uuid_generator_response.status ==400
+    if uuid_generator_response.status == 400
       uuid = uuid_generator_response.parse["uuid"]
     end
     

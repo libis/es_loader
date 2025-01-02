@@ -8,13 +8,12 @@ GOOGLE_AI_VISION_API_v1_0 = {
     version: "1.0",
     rs_data_enrichment: {
         data: { "@" => [ lambda { |d,o|  
-
             texts = d["texts"].map { |t| t["description"] }.sort.uniq.compact
             texts.map! { |t| 
                     {
                         "name": {
                             "@value": t,
-                            "@language": "en-Latn"
+                            "@language": "nl-Latn"
                         }
                     } 
                 }
@@ -25,7 +24,7 @@ GOOGLE_AI_VISION_API_v1_0 = {
                 {
                     "name": {
                         "@value": object,
-                        "@language": "en-Latn"
+                        "@language": "nl-Latn"
                     }
                 } 
             }
@@ -51,7 +50,7 @@ GOOGLE_AI_VISION_API_v1_0 = {
                 rdata[:"prov:wasAttributedTo"][:"prov:wasAssociatedFor"] << {
                             "prov:used": [
                                 {
-                                    "itemListElement": o["itemListElement"],
+                                    "itemListElement": o["enrichment_is_based_on"],
                                     "@type": "itemListElement",
                                     "name": "Used fields from the attributed entity",
                                     "description": "list of fields from the record that are used in this enrichment process",
@@ -83,7 +82,7 @@ GOOGLE_AI_VISION_API_v1_0 = {
                 rdata[:"prov:wasAttributedTo"][:"prov:wasAssociatedFor"] << {
                             "prov:used": [
                                 {
-                                    itemListElement: o["itemListElement"],
+                                    "itemListElement": o["enrichment_is_based_on"],
                                     "@type": "itemListElement",
                                     "name": "Used fields from the attributed entity",
                                     "description": "list of fields from the record that are used in this enrichment process",
