@@ -181,33 +181,35 @@ def create_record(jsondata)
   unless datePublished.nil?
 
     begin
-      
+      date_format = "%Y-%m-%d %H:%M:%S"
+      # replace character U and X with 0 and 9
+      # yyyy-yyyy
       if (datePublished =~ /^.*([0-9UX?]{4}-[0-9UX?]{4}).*$/)
           datePublished = datePublished[/^.*([0-9UX?]{4}-[0-9UX?]{4}).*$/,1]
       end
-      
       if (datePublished =~ /^[0-9UX?]{4}-[0-9UX?]{4}$/) 
           fromyear = parseDate( datePublished[0, 4],"0");
           tillyear = parseDate( datePublished[5, 9],"9");
       end
-
+      
+      # yyyy
       if (datePublished =~ /^[0-9UX?]{4}$/) 
           fromyear = parseDate( datePublished[0, 4],"0");
           tillyear = parseDate( datePublished[0, 4],"9");
       end
 
       if !fromyear.nil? && !tillyear.nil?
-        jsondata['datePublished'] = "#{ (DateTime.parse( "#{fromyear}-01-01" )).strftime("%Y-%m-%d") }" 
+        jsondata['_datePublished'] = [ "#{ (DateTime.parse( "#{fromyear}-01-01 00:00:00" )).strftime(date_format) }","#{ (DateTime.parse( "#{tillyear}-12-31 23:59:59" )).strftime(date_format) }" ]
         datePublished_time_frame = ["gte": "0000"];
         datePublished_time_frame = {
-            "gte" => fromyear ,
+            "gte" => fromyear,
             "lte" => tillyear  
         }
       else
-        jsondata['datePublished'] = "#{ (DateTime.parse( datePublished )).strftime("%Y-%m-%d") }" 
+        jsondata['_datePublished'] = "#{ (DateTime.parse( datePublished )).strftime(date_format) }" 
         datePublished_time_frame = {
-          "gte" => jsondata['datePublished']  ,
-          "lte" => jsondata['datePublished']   
+          "gte" => "#{ (DateTime.parse( datePublished )).strftime(date_format) }",
+          "lte" => "#{ (DateTime.parse( datePublished )).strftime(date_format) }"  
         }
       end
       
@@ -215,7 +217,7 @@ def create_record(jsondata)
 
     rescue StandardError => e
       pp "ERROR Parsing datePublished #{e}  [ #{datePublished} ] in ( #{ jsondata['@id']  } ) "
-      jsondata['datePublished'] = nil
+      jsondata['_datePublished'] = nil
       jsondata['datePublished_time_frame'] = nil
 
       jsondata.compact
@@ -254,7 +256,7 @@ def create_record(jsondata)
       jsondata['dateCreated_time_frame'] = dateCreated_time_frame
       
       begin
-        jsondata['dateCreated'] = "#{ (DateTime.parse( dateCreated )).strftime("%Y-%m-%d") }"  
+        jsondata['dateCreated'] = "#{ (DateTime.parse( dateCreated )).strftime(date_format) }"  
       rescue StandardError => e
         pp "ERROR Parsing dateCreated #{e}  [ #{dateCreated} ] "
         jsondata['dateCreated'] = nil
