@@ -46,6 +46,7 @@ class Loader
   MAX_RESULTS_LIMIT = 300 #Number of records per file 
 
   attr_accessor :config, 
+                :config_file, 
                 :log_file, #log file.
                 :logger,
 
