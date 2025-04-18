@@ -515,7 +515,7 @@ END_OF_MESSAGE
     begin
       unless new_files_in_this_bulk.nil?
         new_files_in_this_bulk.each do |file|
-          puts file
+          @logger.info ("move #{file}")
           FileUtils.mkdir_p(File.dirname( file.gsub('/new/', '/processed/')  ))
           FileUtils.mv(file, file.gsub('/new/', '/processed/'))
         end
@@ -594,7 +594,7 @@ END_OF_MESSAGE
               if files_ids[filename].nil?
                 files_ids[filename] = [f]
               else
-                puts "multiple files for: #{filename}"
+                @logger.info ( "multiple files for: #{filename}" )
                 files_ids[filename] << f
               end
 
@@ -615,14 +615,13 @@ END_OF_MESSAGE
 
             jsondata = preprocess_records( files_to_process.sort)
 
-
             # Retrieve the records from ES and merge if it exists
             # only necessary if a record can be part of multipe datasets
             # or if the record is not completely loaded (example reftweets from twitter)
             
             doc_id = get_document_by_id( index: @current_alias , id: jsondata['@id'] )
             unless doc_id.nil?
-              puts "retrieved from elastic #{ jsondata['@id'] }"
+              @logger.info ( "retrieved from elastic #{ jsondata['@id'] }" )
               unless doc_id["@uuid"].nil?
                 jsondata['@uuid'] = doc_id["@uuid"]
               end
@@ -632,10 +631,15 @@ END_OF_MESSAGE
 
             jsondata = create_record(jsondata)            
             unless doc_id.nil?
-              if jsondata['@id'].start_with?('iCANDID_twitter_')
+
+              one_merged_record_providers = config[:config][:one_merged_record_providers].select { |p| jsondata['@id'].downcase =~ /^icandid_#{p.downcase}/  }
+              if one_merged_record_providers.size > 0
+                @logger.info ("Merge records for #{one_merged_record_providers}")
                 jsondata = merge_json([jsondata,doc_id])
+                jsondata = create_record(jsondata)
+              end
 
-
+              if jsondata['@id'].start_with?('iCANDID_twitter_')
                 if jsondata["author"].is_a?(Array) && jsondata["author"].size > 1
                   jsondata["author"].select!{ |p|
                     if jsondata_from_file["author"].is_a?(Array)
@@ -802,7 +806,7 @@ END_OF_MESSAGE
     begin
       unless new_files_in_this_bulk.nil?
         new_files_in_this_bulk.each do |file|
-          puts file
+          @logger.info ("move #{file}")
           FileUtils.mkdir_p(File.dirname( file.gsub('/new/', '/processed/')  ))
           FileUtils.mv(file, file.gsub('/new/', '/processed/'))
         end
