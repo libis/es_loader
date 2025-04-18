@@ -12,3 +12,8 @@ VERSION_TAG
 ## v7.5.0_20240924 ##
 => datePublished
 => Reindex one dataset at a time.
+
+## v7.5.0_20250101 ##
+
+## v7.5.0_20250417 ##
+=> one_merged_record_providers
