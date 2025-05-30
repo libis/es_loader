@@ -17,6 +17,9 @@
 :import_mappings: "/elastic/mappings.json"
 :import_settings: "/elastic/settings.json"
 :import_pipeline: "/elastic/pipeline.json"
+:one_merged_record_providers:
+  - twitter
+  - tiktok
 :audit:
   :mailfrom: icandid@example.com
   :mailto: tom@example.com

@@ -84,7 +84,8 @@ class Loader
     @logger               = Logger.new(@log_file)
 
     @log_es_client        = false
-    @client_logger        = Logger.new('../logs/es_client.log')
+
+    @client_logger        = Logger.new("#{File.dirname(__FILE__)}/../../logs/es_client.log")
 
     @config_file          = "config.yml"
 

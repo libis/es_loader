@@ -107,8 +107,6 @@ class Loader
     end
   end
 
-
-
   def set_es_mapping (index)
     @logger.info "Import mapping #{@import_mappings} to index: #{index}"
     jsonmappings = JSON.parse( File.read("#{@import_mappings}") )
@@ -159,8 +157,12 @@ class Loader
     end
   end
 
-  def search( index: @current_alias, body: { query: { match_all: {} } } )
-    retval = @es_client.search ({index: index, body: body } )
+  def search( index: @current_alias, body: { query: { match_all: {} } }, scroll: nil )
+    unless scroll.nil?
+      retval = @es_client.search ({index: index, body: body, scroll: '1m' } )
+    else
+      retval = @es_client.search ({index: index, body: body } )
+    end
 
     if retval["took"]
       retval
@@ -169,6 +171,17 @@ class Loader
     end
   end
 
+
+  def scroll( index: @current_alias, body: { query: { match_all: {} } }, scroll: nil )
+  pp "-------------------------------->>>>>>>>>>>>>>> SCROLL"
+    retval = @es_client.scroll ({index: index, body: body,  scroll: '1m' } )
+
+    if retval["took"]
+      retval
+    else
+      nil
+    end
+  end
 
 
   def load_to_es(jsondata, client, logger)
