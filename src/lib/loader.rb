@@ -603,7 +603,6 @@ END_OF_MESSAGE
             files_ids
           end
 
-
           # files that are located in a directory structure that contains "new"
           # will be moved to the directory where "new" is replaced by "processed" 
           new_files_in_this_bulk = []
@@ -630,10 +629,12 @@ END_OF_MESSAGE
 
             jsondata_from_file = jsondata.clone
 
-            jsondata = create_record(jsondata)            
+            jsondata = create_record(jsondata)
+            @logger.debug ( "record created for upload #{ jsondata['@id'] }" )     
             unless doc_id.nil?
 
-              one_merged_record_providers = config[:config][:one_merged_record_providers].select { |p| jsondata['@id'].downcase =~ /^icandid_#{p.downcase}/  }
+              one_merged_record_providers = @config[:one_merged_record_providers].select { |p| jsondata['@id'].downcase =~ /^icandid_#{p.downcase}/  }
+    
               if one_merged_record_providers.size > 0
                 @logger.info ("Merge records for #{one_merged_record_providers}")
                 jsondata = merge_json([jsondata,doc_id])
