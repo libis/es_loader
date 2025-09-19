@@ -18,7 +18,7 @@ begin
   loader_config = loader.config()
 
   pp loader.config_file
-  config = YAML::load_file("#{File.dirname(__FILE__)}/../../config/#{loader.config_file}", permitted_classes: [Symbol, Regexp])
+  config = YAML::load_file("#{File.dirname(__FILE__)}/../config/#{loader.config_file}", permitted_classes: [Symbol, Regexp])
   
   if config[:snapshot_index_pattern].nil?
     raise "config[:snapshot_index_pattern] are not defined in #{loader.config_file}"
@@ -42,7 +42,7 @@ begin
 
  #  @es_url = "https://admin:iadmindid@host.docker.internal:9300/"
 
-  @es_client = Elasticsearch::Client.new url: @es_url, transport_options: {  ssl:  { verify: false } }
+    @es_client = Elasticsearch::Client.new url: @es_url, transport_options: {  ssl:  { verify: false } }
 
   # Configuration
   month_str = Time.now.strftime('%Y-%m')
@@ -71,6 +71,29 @@ begin
   rescue => e
     puts "Error checking or creating repository: #{e.message}"
   end
+
+
+  #Check if all snapshots are processed
+  begin
+    snapshots = @es_client.snapshot.get(repository: repo_name, snapshot: '_all')
+    incomplete = snapshots['snapshots'].select { |s| s['state'] != 'SUCCESS' }
+
+    if incomplete.empty?
+      puts "✅ All snapshots in repository '#{repo_name}' completed successfully."
+    else
+      puts "⚠️ Some snapshots are not successful:"
+      incomplete.each do |snap|
+        puts "- #{snap['snapshot']}: #{snap['state']}"
+      end
+      exit()
+    end
+  rescue => e
+    puts "Error checking snapshots: #{e.message}"
+    exit()
+  end
+
+
+
 
   # Create snapshot
   begin
