@@ -4,13 +4,10 @@ require "iso639"
 
 include DataCollector::Core
 
-# ONLY USE FOR THE RECORDS FROM /icandid/icandid_shared/volumes/source_records/GoogleAI/ZweedsParlement !!!
-
-
-GOOGLE_AI_TRANLATION_v1_0 = {
+GOOGLE_AI_VIDEO_INTELLIGENCE_API_v1_0 = {
     version: "1.0",
     rs_data_enrichment: {
-        data: { "$._translation" => [ lambda { |d,o|  
+        data: { "$" => [ lambda { |d,o|  
             generatedAtTime = o["enrichment"]["file_generatedAtTime"] || DateTime.now
 
             # d["additionalType"] = o["additionalType"]
@@ -26,11 +23,6 @@ GOOGLE_AI_TRANLATION_v1_0 = {
                                 "name": "Used fields from the attributed entity",
                                 "description": "list of fields from the record that are used in this enrichment process",
                                 "@id": "used_fields_for_enrichment"
-                                },
-                                {
-                                "name": "Google Neural Machine Translation model",
-                                "@id": "google_nmt",
-                                "url": "https://cloud.google.com/translate/docs/languages"
                                 }
                             ],
                             "prov:generatedAtTime": generatedAtTime,
@@ -38,9 +30,9 @@ GOOGLE_AI_TRANLATION_v1_0 = {
                                 "prov:Activity",
                                 "action"
                             ],
-                            "name": "Google Cloud Translation",
+                            "name": "Google Cloud Video Intelligence",
                             "@id": "#{o["prov:wasAssociatedFor_id"]}",
-                            "prov:generated": d.map { |k,v| d[k].delete("@language_original"); {k => d[k]}  }
+                            "prov:generated": {"annotation_results": o["enrichment"]['annotation_results'] }
                         }
                     ],
                     "@type": [
@@ -48,10 +40,10 @@ GOOGLE_AI_TRANLATION_v1_0 = {
                         "agent"
                     ],
                     "prov:type": "prov:SoftwareAgent",
-                    "name": "Google Cloud Translation",
-                    "description": "Cloud Translation API uses Google's neural machine translation technology to let you dynamically translate text",
-                    "@id": "google_cloud_translation",
-                    "url": "https://cloud.google.com/translate"
+                    "name": "Google Cloud Video Intelligence",
+                    "description": "The Video Intelligence API enables the annotation of videos—whether stored locally, in Cloud Storage, or live-streamed—by applying contextual insights at multiple levels: across the entire video, by segment, by shot, and even frame-by-frame, using Google's advanced video analysis technology.",
+                    "@id": "google_video_intelligence",
+                    "url": "https://cloud.google.com/video-intelligence/docs"
                     }
                 ]
             }

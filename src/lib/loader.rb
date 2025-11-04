@@ -1,24 +1,3 @@
-class Array
-  def uniqBeginString
-    self.uniq!
-    array = self
-    if array.map { |string| string.class }.uniq === [String]
-      array = self.select { |str|
-        output = true
-        self.each { |el|
-          if str != el
-            if el.start_with?(str)
-              el.start_with?(str)
-              output = false
-            end
-          end
-        } 
-        output
-      }
-    end
-    array
-  end
-end
 
 class Loader
 
@@ -42,6 +21,8 @@ class Loader
   #require_relative './icandid_utils'
   require_relative './es_index'
   require_relative './config'
+  require_relative './helpers/helpers'
+  require_relative './helpers/process_enrichment'
 
   MAX_RESULTS_LIMIT = 300 #Number of records per file 
 
@@ -160,7 +141,7 @@ class Loader
 
     @record_dirs_to_load.map! do |d|
       if Dir.glob(d).empty?
-        d = "/records/#{d}"
+        d = (d.start_with?("/records/") || d.start_with?("/source_records")) ? d : "/records/#{d}"
       end
       "#{d}/**/" 
     end
@@ -407,12 +388,22 @@ END_OF_MESSAGE
 
   
   def load_enrichtment
-    # Read json-records (enrichment) from @record_dirs_to_load
-    # expects these enrichment-records to contain _source.@id of the records that must be enriched
-    # retrieves the records from Elastic Index based on _source.@id and places them in es_doc
-    # The enrichment-records in json-format is passed to the rule as options[:enrichment]
-    # rules_ng.run(  @conf[:rule_set].constantize[:rs_records], es_doc, output, options )
-    # add output to @jsonoutput and load the enriched records to Elastic Index with process_bulk()
+    # Reads enrichment JSON files from @record_dirs_to_load.
+    # Each enrichment record must contain a _source.@id field, identifying the target record to be enriched. 
+    # Transformation of _source.@id to exactly match the iCANDID id are set in enrichment.record_id_transformation
+    # Retrieves the corresponding records from the Elasticsearch index using these IDs and stores them in es_doc.
+    # Passes the enrichment data to the rule engine via options[:enrichment].
+    # Executes the rule set defined in @conf[:rule_set] using rules_ng.run(...), applying enrichment logic to the retrieved records.
+    # The @conf[:enrichment][:rule_set] is used while parsing the @conf[:rule_set] it is pased to in as an option
+    # Appends the enriched output to @jsonoutput.
+    # Finally, updates the Elasticsearch index with the enriched records using process_bulk().
+    #
+    # Example config.yml 
+    #   :rule_set: GOOGLE_AI_RULE_SET_v1_0
+    #   :enrichment:
+    #     :rule_set: GOOGLE_AI_TRANLATION_v1_0
+    #     :options:
+    #
 
     begin
       @total_nr_of_bulk_files = 0
@@ -436,8 +427,8 @@ END_OF_MESSAGE
       @record_dirs_to_load.each do |records_dir|
         @logger.info "Start processing files in #{records_dir} [#{lastrun} < File.mtime]"
 
-        files = Dir["#{records_dir}/**/*"].select {|x| x =~ @record_pattern } 
-     
+        files = Dir["#{records_dir}/*", "#{records_dir}/**/*"].select {|x| x =~ @record_pattern } 
+        files.uniq!
         @logger.info " number of files to process  : #{files.size} "
 
         @nr_of_processed_files = 0
@@ -450,17 +441,23 @@ END_OF_MESSAGE
           files.each do |jsonfile|
             if lastrun < File.mtime(jsonfile) 
               # @logger.debug jsonfile
-             
+
               data = JSON.parse( File.read("#{jsonfile}") )
 
               options = { :enrichment => data }
     
               new_files_in_this_bulk << jsonfile if jsonfile =~ /\/new\//
+            
+              unless @config[:enrichment][:record_id_transformation].nil?
+                recordid = data['_source']['@id'].gsub( Regexp.new( @config[:enrichment][:record_id_transformation][:search]),  @config[:enrichment][:record_id_transformation][:replace])
+              else
+                recordid = data['_source']['@id']
+              end
 
-              es_doc = get_document_by_id( index: @current_alias , id: "#{data['_source']['@id']}" )
+              es_doc = get_document_by_id( index: @current_alias , id: "#{ recordid }" )
              
               if es_doc.nil?
-                pp "#{data['_source']['@id']} RECORD NOT FOUND in #{@current_alias}"
+                pp "#{ recordid } [#{ data['_source']['@id'] }] RECORD NOT FOUND in #{@current_alias}"
                 exit
               end
               @logger.info "doc_id : #{es_doc['@id']} "
@@ -471,10 +468,19 @@ END_OF_MESSAGE
               @config[:enrichment][:options].each { |k,v|
                 options[k] = v  
               }
+              
+              #pp "ddddddddddddddddddddddddddddddddddddddddddd"
+              #pp es_doc["prov:wasAttributedTo"][0]["prov:wasAssociatedFor"][0]["@id"]
+              #pp "ddddddddddddddddddddddddddddddddddddddddd"
 
               rules_ng.run(  @conf[:rule_set].constantize[:rs_records], es_doc, output, options )
 
               jsondata =  output[:records]
+
+              #pp "ddddddddddddddddddddddddddddddddddddddddd"
+              #pp jsondata['@id']
+              #pp jsondata["prov:wasAttributedTo"][0]["prov:wasAssociatedFor"][0]["@id"]
+              #pp "ddddddddddddddddddddddddddddddddddddddddd"              
 
               # pp jsondata['@id']
               @jsonoutput << {"index":{
@@ -730,8 +736,8 @@ END_OF_MESSAGE
       @record_dirs_to_load.each do |records_dir|
         @logger.info "Start processing files in #{records_dir} [#{lastrun} < File.mtime]"
 
-        files = Dir["#{records_dir}/**/*"].select {|x| x =~ @record_pattern } 
-     
+        files = Dir["#{records_dir}/*", "#{records_dir}/**/*"].select {|x| x =~ @record_pattern } 
+
         @logger.info " number of files to process  : #{files.size} "
 
         @nr_of_processed_files = 0

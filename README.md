@@ -39,4 +39,42 @@ Prepare record and load records to elasticsearch
 => ruby ./src/load_to_es.rb -c config.yml -t reindex
 => ruby ./src/load_to_es.rb -c config.yml -t update -d "GoPress/2021**" -u '2021-03-15 16:00' -p "demorgen"
 => /usr/local/bin/docker-compose -f docker-compose-opendistro.yml run elastic_loader ruby /app/src/load_to_es.rb -c es_loader_config_opendistro.yml -t update -d Twitter/twitter_user_query_00003/2020 -u '2021-04-01 12:00'
-=> docker-compose run --rm es_loader ruby  /app/src/load_to_es.rb -c config.yml -d Twitter
+
+=> docker-compose run --rm es_loader_dev  bash -c "cd /app/src/; ruby compare_indices.rb"
+
+=> docker-compose run --rm es_loader bash -c "ruby /app/src/load_to_es.rb -c config.yml -d Twitter"
+
+=> docker-compose run --rm es_loader_dev bash
+cd /app/src; 
+ruby load_enrichments_to_es.rb -c config_google_ai_translation_sv_en.yml -t enrichtment -u 01-01-2024 -l ${logfile}
+
+
+ruby reindex_subset.rb -c reindex_config.yml
+
+ruby /app/src/load_to_es.rb -c config_google_ai.yml -u 2020-01-01
+
+=> local
+docker-compose run es_loader_dev bash -c "ruby /app/src/load_to_es.rb -c icandid_test.yml -t update -d scopeArchiv/kadoc_ead_query_0000001/ -p '*00.json' -u '2000-01-01 12:00'"
+
+docker-compose run es_loader_dev bash -c "ruby /app/src/load_to_es.rb -c config_google_ai_vision_api.yml -u '2000-01-01 12:00'"
+
+docker-compose run es_loader_dev bash -c "ruby /app/src/extract_datamodel_from_mapping.rb -c config.yml"
+
+
+ruby /app/src/load_to_es.rb -c tiktok_config.yml -d /records/tiktok/tiktok_query_0000002/new/
+
+ruby /app/src/load_to_es.rb -c config_google_ai_video_intelligence_api_ena.yml -t enrichtment -u '2000-01-01 12:00'
+
+ruby /app/src/load_to_es.rb -c config_whisper_turbo_ena.yml -t enrichtment -u '2000-01-01 12:00'
+
+ruby /app/src/build_model.rb -c icandid_mapping.yml
+
+# TESTS
+# 
+rake api_tests API_KEY=************* 
+rake api_tests API_KEY=************* INDEX=any,title,author --trace
+ 
+# Run all api tests (in parallel)
+rake api_tests_parallel
+
+

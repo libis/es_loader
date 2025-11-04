@@ -103,7 +103,11 @@ class Loader
         log.error retval
         raise "Errors in get mappings: #{retval['errors']}"
       else
-        retval[index]["mappings"]        
+        if retval.keys.include?(index)
+          retval[index]["mappings"]        
+        else
+          raise "The supplied index appears to be an alias, not one of the expected keys: #{retval.keys}. Please verify that you're referencing a concrete index name rather than an alias."
+        end
     end
   end
 

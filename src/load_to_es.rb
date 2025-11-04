@@ -44,6 +44,8 @@ begin
     loader.logger.info "update ES config last run : #{last_run}"
     
     loader.update_bulk()
+
+    loader.logger.info "update ES completed : #{loader.record_dirs_to_load}"
   
   when "reload"
     printf "\n\nWARNING - This is a full_reload 'y' to continue: "
@@ -70,8 +72,8 @@ begin
 
   when "enrichtment"
 
-    Dir[ "./rules/*.rb" ].each {|file| require file; }
- 
+    Dir["#{__dir__}/rules/*.rb"].each {|file| require file; }
+    
     last_run = loader.last_run_updates
 
     #total_nr_of_bulk_files = 0

@@ -4,13 +4,10 @@ require "iso639"
 
 include DataCollector::Core
 
-# ONLY USE FOR THE RECORDS FROM /icandid/icandid_shared/volumes/source_records/GoogleAI/ZweedsParlement !!!
-
-
-GOOGLE_AI_TRANLATION_v1_0 = {
+WHISPER_LARGE_TURBO_RULE_SET_v1_0 = {
     version: "1.0",
     rs_data_enrichment: {
-        data: { "$._translation" => [ lambda { |d,o|  
+        data: { "$" => [ lambda { |d,o|  
             generatedAtTime = o["enrichment"]["file_generatedAtTime"] || DateTime.now
 
             # d["additionalType"] = o["additionalType"]
@@ -28,9 +25,9 @@ GOOGLE_AI_TRANLATION_v1_0 = {
                                 "@id": "used_fields_for_enrichment"
                                 },
                                 {
-                                "name": "Google Neural Machine Translation model",
-                                "@id": "google_nmt",
-                                "url": "https://cloud.google.com/translate/docs/languages"
+                                "name": "Whisper #{o["enrichment"]["model"]} Model",
+                                "@id": "whisper_l#{o["enrichment"]["model"]}",
+                                "url": "https://huggingface.co/openai/whisper-large-v3-turbo"
                                 }
                             ],
                             "prov:generatedAtTime": generatedAtTime,
@@ -38,9 +35,9 @@ GOOGLE_AI_TRANLATION_v1_0 = {
                                 "prov:Activity",
                                 "action"
                             ],
-                            "name": "Google Cloud Translation",
+                            "name": "Whisper",
                             "@id": "#{o["prov:wasAssociatedFor_id"]}",
-                            "prov:generated": d.map { |k,v| d[k].delete("@language_original"); {k => d[k]}  }
+                            "prov:generated": {"result": o["enrichment"]['result'] }
                         }
                     ],
                     "@type": [
@@ -48,10 +45,10 @@ GOOGLE_AI_TRANLATION_v1_0 = {
                         "agent"
                     ],
                     "prov:type": "prov:SoftwareAgent",
-                    "name": "Google Cloud Translation",
-                    "description": "Cloud Translation API uses Google's neural machine translation technology to let you dynamically translate text",
-                    "@id": "google_cloud_translation",
-                    "url": "https://cloud.google.com/translate"
+                    "name": "Whisper Service",
+                    "description": "Whisper is a state-of-the-art model for automatic speech recognition (ASR) and speech translation",
+                    "@id": "whisper",
+                    "url": "https://github.com/openai/whisper"
                     }
                 ]
             }

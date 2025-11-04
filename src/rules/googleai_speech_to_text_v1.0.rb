@@ -4,13 +4,10 @@ require "iso639"
 
 include DataCollector::Core
 
-# ONLY USE FOR THE RECORDS FROM /icandid/icandid_shared/volumes/source_records/GoogleAI/ZweedsParlement !!!
-
-
-GOOGLE_AI_TRANLATION_v1_0 = {
+GOOGLE_AI_SPEECH_TO_TEXT_API_v1_0 = {
     version: "1.0",
     rs_data_enrichment: {
-        data: { "$._translation" => [ lambda { |d,o|  
+        data: { "$" => [ lambda { |d,o|  
             generatedAtTime = o["enrichment"]["file_generatedAtTime"] || DateTime.now
 
             # d["additionalType"] = o["additionalType"]
@@ -28,9 +25,9 @@ GOOGLE_AI_TRANLATION_v1_0 = {
                                 "@id": "used_fields_for_enrichment"
                                 },
                                 {
-                                "name": "Google Neural Machine Translation model",
-                                "@id": "google_nmt",
-                                "url": "https://cloud.google.com/translate/docs/languages"
+                                "name": "Google Speech-to-Text Service",
+                                "@id": "google_speech_to_text",
+                                "url": "https://cloud.google.com/speech-to-text/docs"
                                 }
                             ],
                             "prov:generatedAtTime": generatedAtTime,
@@ -38,9 +35,9 @@ GOOGLE_AI_TRANLATION_v1_0 = {
                                 "prov:Activity",
                                 "action"
                             ],
-                            "name": "Google Cloud Translation",
+                            "name": "Google Cloud Speech-to-Text",
                             "@id": "#{o["prov:wasAssociatedFor_id"]}",
-                            "prov:generated": d.map { |k,v| d[k].delete("@language_original"); {k => d[k]}  }
+                            "prov:generated": {"results": o["enrichment"]['results'] }
                         }
                     ],
                     "@type": [
@@ -48,10 +45,10 @@ GOOGLE_AI_TRANLATION_v1_0 = {
                         "agent"
                     ],
                     "prov:type": "prov:SoftwareAgent",
-                    "name": "Google Cloud Translation",
-                    "description": "Cloud Translation API uses Google's neural machine translation technology to let you dynamically translate text",
-                    "@id": "google_cloud_translation",
-                    "url": "https://cloud.google.com/translate"
+                    "name": "Google Cloud Speech-to-Text",
+                    "description": "Speech-to-Text enables easy integration of Google speech recognition technologies into developer applications. Send audio and receive a text transcription from the Speech-to-Text API service.",
+                    "@id": "google_speech_to_text",
+                    "url": "https://cloud.google.com/speech-to-text/docs"
                     }
                 ]
             }

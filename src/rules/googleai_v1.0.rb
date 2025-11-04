@@ -15,7 +15,6 @@ GOOGLE_AI_RULE_SET_v1_0 = {
             # o["enrichment"] the record (from disk) that will be added as enrichment
 
             rules_ng.run(GOOGLE_AI_RULE_SET_v1_0[:rs_record], d, records, o)
-
 =begin
 This was added if the enrichments should be part of a specific associatedMedia object instead of the entire record
 
@@ -43,6 +42,7 @@ This was added if the enrichments should be part of a specific associatedMedia o
     rs_record: {
         records: { "$" => [ lambda { |d,o|  
             enrichment = DataCollector::Output.new
+
             rules_ng.run( o[:rule_set].constantize[:rs_data_enrichment], o[:enrichment]["_source"], enrichment, o)
                         
             # loop over the enrichment[:data] and check if it must be added to or replace the data in d
@@ -63,56 +63,54 @@ This was added if the enrichments should be part of a specific associatedMedia o
             # add to existing of replace ?
             # ToDo  enrichment[:data]["prov:wasAttributedTo"].nil?  ????
             # ==>  enrichment[:data].nil ==> Must "prov:wasAttributedTo" be deleted ?
+            d = process_enrichment(enrichment, d)
+            return d
 
-            unless enrichment[:data].nil?
-                enrichment[:data]["prov:wasAttributedTo"] = [enrichment[:data]["prov:wasAttributedTo"]] unless enrichment[:data]["prov:wasAttributedTo"].is_a?(Array)
+            #unless enrichment[:data].nil?
+            #    enrichment[:data]["prov:wasAttributedTo"] = [enrichment[:data]["prov:wasAttributedTo"]] unless enrichment[:data]["prov:wasAttributedTo"].is_a?(Array)
 
-                if d["prov:wasAttributedTo"]
-                    d["prov:wasAttributedTo"] = [ d["prov:wasAttributedTo"]  ] unless d["prov:wasAttributedTo"].is_a?(Array)
+            #    if d["prov:wasAttributedTo"]
+            #        d["prov:wasAttributedTo"] = [ d["prov:wasAttributedTo"]  ] unless d["prov:wasAttributedTo"].is_a?(Array)
 
-                    enrichment[:data]["prov:wasAttributedTo"].each do |enrich_wasAttributedTo|
-                        enrich_wasAttributedTo["prov:wasAssociatedFor"].each do |enrich_wasAssociatedFor|
-                            enrichment_processed = false 
+            #        enrichment[:data]["prov:wasAttributedTo"].each do |enrich_wasAttributedTo|
+            #            enrich_wasAttributedTo["prov:wasAssociatedFor"].each do |enrich_wasAssociatedFor|
+            #                enrichment_processed = false 
+            #                d["prov:wasAttributedTo"].map! { |prov_wasattributedto|
+            #                    if prov_wasattributedto["@id"] == enrich_wasAttributedTo["@id"]
+            #                        prov_wasattributedto["prov:wasAssociatedFor"].map! {  |prov_wasssociatedfor| 
+            #                            if prov_wasssociatedfor["@id"] == enrich_wasAssociatedFor["@id"]
+            #                                enrichment_processed = true
+            #                                if enrich_wasAssociatedFor["prov:generated"].is_a?(Hash)
+            #                                    enrich_wasAssociatedFor["prov:generated"] = [ enrich_wasAssociatedFor["prov:generated"] ]
+            #                                end
+            #                                enrich_wasAssociatedFor["prov:generated"] << prov_wasssociatedfor["prov:generated"] 
 
-                            d["prov:wasAttributedTo"].map! { |prov_wasattributerto|
+            #                                enrich_wasAssociatedFor["prov:generated"] = enrich_wasAssociatedFor["prov:generated"].uniq { |h| deep_sort_hash(h).to_json }
+            #                            else
+            #                                prov_wasssociatedfor
+            #                            end
+            #                            
+            #                        }
+            #                        unless enrichment_processed
+            #                            enrichment_processed = true
+            #                            prov_wasattributedto["prov:wasAssociatedFor"] << enrich_wasAssociatedFor
+            #                        end
+            #                    end
+            #                    prov_wasattributedto 
+            #                }
 
-                                if prov_wasattributerto["@id"] == enrich_wasAttributedTo["@id"]
+            #                unless enrichment_processed
+            #                    enrichment_processed = true
+            #                    d["prov:wasAttributedTo"] << enrich_wasAttributedTo
+            #                end
 
-                                    prov_wasattributerto["prov:wasAssociatedFor"].map! {  |prov_wasssociatedfor| 
-
-                                        if prov_wasssociatedfor["@id"] == enrich_wasAssociatedFor["@id"]
-
-                                            enrich_wasAssociatedFor["prov:generated"].concat prov_wasssociatedfor["prov:generated"]
-                                            enrich_wasAssociatedFor["prov:generated"].uniq!
-
-                                            enrichment_processed = true
-                                        
-                                            prov_wasssociatedfor = enrich_wasAssociatedFor
-                                        end
-                                        prov_wasssociatedfor
-                                    }
-                                    
-                                    unless enrichment_processed
-                                        enrichment_processed = true
-                                        prov_wasattributerto["prov:wasAssociatedFor"] << enrich_wasAssociatedFor
-                                    end
-                                end
-                                prov_wasattributerto 
-                            }
-
-                            unless enrichment_processed
-                                enrichment_processed = true
-                                d["prov:wasAttributedTo"] << enrich_wasAttributedTo
-                            end
-
-                        end
-                    end
-                else
-                    d["prov:wasAttributedTo"] = enrichment[:data]["prov:wasAttributedTo"]
-                end
-            end
-
-            d
+            #            end
+            #        end
+            #    else
+            #        d["prov:wasAttributedTo"] = enrichment[:data]["prov:wasAttributedTo"]
+            #    end
+            #end
+            #d
         } ] }
     }
 }
