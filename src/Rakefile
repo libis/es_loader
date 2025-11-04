@@ -11,6 +11,10 @@ require 'rspec/core/rake_task'
 #   => rake api_tests_parallel SPEC_OPTS="--tag focus"
 # Set API_KEY 
 #   => API_KEY=************** rake api_tests_parallel
+# Run test
+#   => rake api_tests API_KEY=******
+#   => rake api_aggr_tests API_KEY=******
+#   => rake api_search_tests API_KEY=******
 ######################################################################
 
 # DEFAULT_KEY = 'c8c5dddddddddd69d96f06331af9'
@@ -35,13 +39,38 @@ RSpec::Core::RakeTask.new(:api_tests) do |t|
     exit
   end
   
-  #if ENV['INDEX'].nil?
-  #  ENV['INDEX'] = "any,title,author,dataset"
-  #end
-  
   t.pattern = 'spec/searchquery_api/*_spec.rb' 
   t.rspec_opts = "--tag #{ENV['TAG']}" if ENV['TAG']
 end
+
+
+# Define a task to run all API-related specs
+desc "Run API integration tests"
+RSpec::Core::RakeTask.new(:api_search_tests) do |t|
+  if ENV['API_KEY'].nil?
+    pp "check your profile in iCANDID to get the API_KEY"
+    pp "usage: rake api_tests API_KEY=*********" 
+    exit
+  end
+  
+  t.pattern = 'spec/searchquery_api/*index_spec.rb' 
+  t.rspec_opts = "--tag #{ENV['TAG']}" if ENV['TAG']
+end
+
+
+# Define a task to run all API-related specs
+desc "Run API integration tests"
+RSpec::Core::RakeTask.new(:api_aggr_tests) do |t|
+  if ENV['API_KEY'].nil?
+    pp "check your profile in iCANDID to get the API_KEY"
+    pp "usage: rake api_tests API_KEY=*********" 
+    exit
+  end
+  
+  t.pattern = 'spec/searchquery_api/*aggr_spec.rb' 
+  t.rspec_opts = "--tag #{ENV['TAG']}" if ENV['TAG']
+end
+
 
 # Optional: define a default task
 task default: :api_tests

@@ -1,0 +1,5 @@
+[
+    { "aggs": { "TEST_AGGR": { "terms": { "field": "publisher.name.keyword", "order": { "_count": "desc" }, "size": 5000 }, "aggs": { "TEST_AGGR": { "date_histogram": { "field": "_datePublished", "calendar_interval": "1d", "time_zone": "Europe/Brussels", "min_doc_count": 1 } } } } }, "size": 0, "query": { "bool": { "filter": [ { "range": { "_datePublished": { "gte": "2020-01-01", "lt": "2026-01-01" } } } ] } } },
+	{ "aggs": { "TEST_AGGR": { "terms": { "field": "@type", "order": { "_count": "desc" }, "size": 50 } } }, "size": 0 },
+	{ "aggs": { "TEST_AGGR": { "date_histogram": { "field": "_datePublished", "calendar_interval": "1w", "time_zone": "Europe/Brussels", "min_doc_count": 1 } } }, "size": 0, "query": { "bool": { "filter":[ { "range": { "_datePublished": { "gte":"2019-01-01", "lt":"2020-12-31" } } } ] } }}  
+]

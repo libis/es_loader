@@ -1,0 +1,507 @@
+[
+	{
+		"query": {
+			"match_all": {}
+		},
+		"size": 0,
+		"_source": {
+			"excludes": [
+				"*-*_*"
+			]
+		},
+		"sort": {
+			"_score": "desc"
+		},
+		"from": 0,
+		"aggs": {
+			"TEST_AGGR": {
+				"terms": {
+					"field": "publisher.name.keyword",
+					"order": {
+						"_count": "desc"
+					},
+					"size": 50
+				}
+			}
+		}
+	},
+	{
+		"query": {
+			"match_all": {}
+		},
+		"size": 0,
+		"_source": {
+			"excludes": [
+				"*-*_*"
+			]
+		},
+		"sort": {
+			"_score": "desc"
+		},
+		"from": 0,
+		"aggs": {
+			"TEST_AGGR": {
+				"terms": {
+					"field": "creator.name.keyword",
+					"order": {
+						"_count": "desc"
+					},
+					"size": 15
+				}
+			}
+		}
+	},
+	{
+		"query": {
+			"bool": {
+				"must": [
+					{
+						"multi_match": {
+							"query": "belgapress",
+							"fields": [
+								"@id",
+								"identifier.value",
+								"*_name",
+								"*_headline",
+								"isBasedOn.provider.name.keyword",
+								"isBasedOn.provider.alternateName.keyword",
+								"publisher.name.keyword",
+								"*_articleBody",
+								"creator.name",
+								"author.name",
+								"creator.alternateName",
+								"author.alternateName",
+								"sender.name",
+								"sender.alternateName",
+								"creator.name.@value",
+								"author.name.@value",
+								"creator.alternateName.@value",
+								"author.alternateName.@value",
+								"*_description",
+								"*_keywords",
+								"*_text"
+							],
+							"operator": "and"
+						}
+					}
+				],
+				"should": [],
+				"filter": [
+					{
+						"terms": {
+							"isBasedOn.isPartOf.@id": [
+								"belgapress_query_00021",
+								"belgapress_query_00022",
+								"belgapress_query_00023",
+								"belgapress_query_00024",
+								"belgapress_query_00027",
+								"belgapress_query_00013",
+								"belgapress_query_00014",
+								"belgapress_query_00015",
+								"ena_trial_01030703",
+								"belgapress_query_00016",
+								"belgapress_query_00017",
+								"belgapress_query_00018",
+								"belgapress_query_00019",
+								"belgapress_query_00020",
+								"ena_vrt",
+								"ena_vtm"
+							]
+						}
+					}
+				]
+			}
+		},
+		"size": 0,
+		"_source": {
+			"excludes": [
+				"*-*_*"
+			]
+		},
+		"sort": {
+			"_score": "desc"
+		},
+		"from": 0,
+		"aggs": {
+			"TEST_AGGR": {
+				"filters": {
+					"filters": {
+						"TEST_AGGR": {
+							"term": {
+								"prov:wasAttributedTo.name.keyword": "SpaCy"
+							}
+						}
+					}
+				},
+				"aggs": {
+					"TEST_AGGR": {
+						"nested": {
+							"path": "prov:wasAttributedTo.prov:wasAssociatedFor"
+						},
+						"aggs": {
+							"TEST_AGGR": {
+								"terms": {
+									"field": "prov:wasAttributedTo.prov:wasAssociatedFor._generated.ALL",
+									"size": 100
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	,
+	{
+		"query": {
+			"match_all": {}
+		},
+		"size": 0,
+		"_source": {
+			"excludes": [
+				"*-*_*"
+			]
+		},
+		"sort": {
+			"_score": "desc"
+		},
+		"from": 0,
+		"aggs": {
+			"TEST_AGGR": {
+				"terms": {
+					"field": "publisher.name.keyword",
+					"size": 10
+				}
+			}
+		}
+	},
+	{
+		"query": {
+			"bool": {
+				"must": [
+					{
+						"bool": {
+							"must": [
+								{
+									"multi_match": {
+										"query": "limburg",
+										"fields": [
+											"@id",
+											"identifier.value",
+											"*_name",
+											"*_headline",
+											"isBasedOn.provider.name.keyword",
+											"isBasedOn.provider.alternateName.keyword",
+											"publisher.name.keyword",
+											"*_articleBody",
+											"creator.name",
+											"author.name",
+											"creator.alternateName",
+											"author.alternateName",
+											"sender.name",
+											"sender.alternateName",
+											"creator.name.@value",
+											"author.name.@value",
+											"creator.alternateName.@value",
+											"author.alternateName.@value",
+											"*_description",
+											"*_keywords",
+											"*_text"
+										],
+										"operator": "and"
+									}
+								}
+							],
+							"should": [],
+							"filter": [
+								{
+									"terms": {
+										"isBasedOn.isPartOf.@id": [
+											"belgapress_query_00021",
+											"belgapress_query_00022",
+											"belgapress_query_00023",
+											"belgapress_query_00024",
+											"belgapress_query_00027",
+											"belgapress_query_00013",
+											"belgapress_query_00014",
+											"belgapress_query_00015",
+											"ena_trial_01030703",
+											"belgapress_query_00016",
+											"belgapress_query_00017",
+											"belgapress_query_00018",
+											"belgapress_query_00019",
+											"belgapress_query_00020",
+											"ena_vrt",
+											"ena_vtm"
+										]
+									}
+								}
+							]
+						}
+					},
+					{
+						"query_string": {
+							"fields": [
+								"name.@value",
+								"headline",
+								"articleBody",
+								"description",
+								"text"
+							],
+							"query": "Gent"
+						}
+					}
+				]
+			}
+		},
+		"size": 0,
+		"_source": {
+			"excludes": [
+				"*-*_*"
+			]
+		},
+		"sort": {
+			"_score": "desc"
+		},
+		"from": 0,
+		"aggs": {
+			"TEST_AGGR": {
+				"date_histogram": {
+					"field": "datePublished",
+					"calendar_interval": "1d",
+					"time_zone": "Europe/Brussels",
+					"min_doc_count": 1
+				}
+			}
+		}
+	},
+	{
+		"track_total_hits": true,
+		"_source": [
+			"creator",
+			"author",
+			"sender"
+		],
+		"query": {
+			"bool": {
+				"must": [
+					{
+						"term": {
+							"isBasedOn.provider.alternateName.keyword": {
+								"value": "Twitter"
+							}
+						}
+					},
+					{
+						"script": {
+							"script": "doc['author.@id'].value != doc['sender.@id'].value"
+						}
+					},
+					{
+						"bool": {
+							"must": [
+								{
+									"multi_match": {
+										"query": "boek",
+										"fields": [
+											"@id",
+											"identifier.value",
+											"*_name",
+											"*_headline",
+											"isBasedOn.provider.name.keyword",
+											"isBasedOn.provider.alternateName.keyword",
+											"publisher.name.keyword",
+											"*_articleBody",
+											"creator.name",
+											"author.name",
+											"creator.alternateName",
+											"author.alternateName",
+											"sender.name",
+											"sender.alternateName",
+											"creator.name.@value",
+											"author.name.@value",
+											"creator.alternateName.@value",
+											"author.alternateName.@value",
+											"*_description",
+											"*_keywords",
+											"*_text"
+										],
+										"operator": "and"
+									}
+								}
+							],
+							"should": [],
+							"filter": [
+								{
+									"terms": {
+										"isBasedOn.isPartOf.@id": [
+											"youtube_query_00001",
+											"tiktok_query_0000001",
+											"tiktok_query_0000004",
+											"twitter_query_0000009",
+											"twitter_query_0000012",
+											"twitter_query_0000011",
+											"twitter_query_0000016",
+											"twitter_query_0000010",
+											"twitter_query_0000006",
+											"twitter_query_0000007",
+											"twitter_query_0000014",
+											"twitter_query_0000008",
+											"twitter_query_0000013",
+											"twitter_query_0000020",
+											"twitter_query_0000018",
+											"twitter_query_0000002",
+											"twitter_query_0000001",
+											"twitter_query_0000061",
+											"twitter_query_0000059",
+											"twitter_query_0000062",
+											"twitter_query_0000060"
+										]
+									}
+								}
+							]
+						}
+					}
+				],
+				"filter": {
+					"exists": {
+						"field": "author.@id"
+					}
+				}
+			}
+		},
+		"aggs": {
+			"provider": {
+				"terms": {
+					"field": "isBasedOn.provider.name.keyword",
+					"size": 10
+				}
+			},
+			"TEST_AGGR": {
+				"terms": {
+					"field": "author.@id",
+					"size": 10
+				},
+				"aggs": {
+					"TEST_AGGR": {
+						"terms": {
+							"field": "sender.@id",
+							"size": 1000
+						}
+					}
+				}
+			}
+		}
+	},
+	{
+		"query": {
+			"bool": {
+				"must": [
+					{
+						"bool": {
+							"must": [
+								{
+									"multi_match": {
+										"query": "boek",
+										"fields": [
+											"@id",
+											"identifier.value",
+											"*_name",
+											"*_headline",
+											"isBasedOn.provider.name.keyword",
+											"isBasedOn.provider.alternateName.keyword",
+											"publisher.name.keyword",
+											"*_articleBody",
+											"creator.name",
+											"author.name",
+											"creator.alternateName",
+											"author.alternateName",
+											"sender.name",
+											"sender.alternateName",
+											"creator.name.@value",
+											"author.name.@value",
+											"creator.alternateName.@value",
+											"author.alternateName.@value",
+											"*_description",
+											"*_keywords",
+											"*_text"
+										],
+										"operator": "and"
+									}
+								}
+							],
+							"should": [],
+							"filter": [
+								{
+									"terms": {
+										"isBasedOn.isPartOf.@id": [
+											"belgapress_query_00021",
+											"belgapress_query_00022",
+											"belgapress_query_00023",
+											"belgapress_query_00024",
+											"belgapress_query_00027",
+											"belgapress_query_00013",
+											"belgapress_query_00014",
+											"belgapress_query_00015",
+											"ena_trial_01030703",
+											"belgapress_query_00016",
+											"belgapress_query_00017",
+											"belgapress_query_00018",
+											"belgapress_query_00019",
+											"belgapress_query_00020",
+											"ena_vrt",
+											"ena_vtm"
+										]
+									}
+								}
+							]
+						}
+					},
+					{
+						"query_string": {
+							"fields": [
+								"name.@value",
+								"headline",
+								"articleBody",
+								"description",
+								"text"
+							],
+							"query": "fictief"
+						}
+					}
+				]
+			}
+		},
+		"size": 0,
+		"_source": {
+			"excludes": [
+				"*-*_*"
+			]
+		},
+		"sort": {
+			"_score": "desc"
+		},
+		"from": 0,
+		"aggs": {
+			"TEST_AGGR": {
+				"terms": {
+					"field": "publisher.name.keyword",
+					"order": {
+						"_count": "desc"
+					},
+					"size": 50
+				},
+				"aggs": {
+					"TEST_AGGR": {
+						"date_histogram": {
+							"field": "datePublished",
+							"calendar_interval": "1d",
+							"time_zone": "Europe/Brussels",
+							"min_doc_count": 1
+						}
+					}
+				}
+			}
+		}
+	}
+]
