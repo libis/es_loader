@@ -1,0 +1,24 @@
+[
+    {
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "query_string": {
+                            "fields": [
+                                "isBasedOn.provider.name.keyword",
+                                "isBasedOn.provider.alternateName.keyword"
+                            ],
+                            "query": "Twitter"
+                        }
+                    },
+                    {
+                        "bool": {
+                            "filter": []
+                        }
+                    }
+                ]
+            }
+        }
+    }
+]

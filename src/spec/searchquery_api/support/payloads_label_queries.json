@@ -1,0 +1,20 @@
+[
+    {
+        "query": {
+            "bool": {
+                "filter": [
+                    {
+                        "terms": {
+                            "isBasedOn.isPartOf.@id": [
+                                "data_riksdagen_query_0000001",
+                                "plenum_query_0000001",
+                                "vlpar_opendata_query_0000001",
+                                "vlpar_opendata_query_0000002"
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    }
+]

@@ -1,0 +1,650 @@
+[
+    {
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "multi_match": {
+                            "query": "wever",
+                            "fields": [
+                                "@id",
+                                "identifier.value",
+                                "*_name",
+                                "*_headline",
+                                "isBasedOn.provider.name.keyword",
+                                "isBasedOn.provider.alternateName.keyword",
+                                "publisher.name.keyword",
+                                "*_articleBody",
+                                "creator.name",
+                                "author.name",
+                                "creator.alternateName",
+                                "author.alternateName",
+                                "sender.name",
+                                "sender.alternateName",
+                                "creator.name.@value",
+                                "author.name.@value",
+                                "creator.alternateName.@value",
+                                "author.alternateName.@value",
+                                "*_description",
+                                "*_keywords",
+                                "*_text"
+                            ],
+                            "operator": "and"
+                        }
+                    }
+                ],
+                "should": [],
+                "filter": [
+                    {
+                        "terms": {
+                            "isBasedOn.isPartOf.@id": [
+                                "belgapress_query_00021",
+                                "belgapress_query_00022",
+                                "belgapress_query_00023",
+                                "belgapress_query_00024",
+                                "belgapress_query_00027",
+                                "belgapress_query_00013",
+                                "belgapress_query_00014",
+                                "belgapress_query_00015",
+                                "ena_trial_01030703",
+                                "belgapress_query_00016",
+                                "belgapress_query_00017",
+                                "belgapress_query_00018",
+                                "belgapress_query_00019",
+                                "imdb-api_query_00001",
+                                "kadoc_ead_query_0000001",
+                                "scopearchiv_query_0000001",
+                                "youtube_query_00002",
+                                "youtube_query_00001",
+                                "belgapress_query_00001",
+                                "belgapress_query_00002",
+                                "belgapress_query_00007",
+                                "belgapress_query_00003",
+                                "belgapress_query_00004",
+                                "belgapress_query_00008",
+                                "belgapress_query_00009",
+                                "belgapress_query_00010",
+                                "belgapress_query_00005",
+                                "belgapress_query_00006",
+                                "belgapress_query_00020",
+                                "belgapress_query_00011",
+                                "europeana_query_00001",
+                                "plenum_query_0000001",
+                                "data_riksdagen_query_0000001",
+                                "tmdb_query_00001",
+                                "tiktok_query_0000001",
+                                "tiktok_query_0000002",
+                                "tiktok_query_0000004",
+                                "twitter_query_0000009",
+                                "twitter_query_0000005",
+                                "twitter_query_0000012",
+                                "twitter_query_0000011",
+                                "twitter_query_0000016",
+                                "twitter_query_0000015",
+                                "twitter_query_0000010",
+                                "twitter_query_0000006",
+                                "twitter_query_0000007",
+                                "twitter_query_0000014",
+                                "twitter_query_0000008",
+                                "twitter_query_0000013",
+                                "twitter_query_0000020",
+                                "twitter_query_0000018",
+                                "twitter_query_0000002",
+                                "twitter_query_0000001",
+                                "twitter_query_0000061",
+                                "twitter_query_0000059",
+                                "twitter_query_0000062",
+                                "twitter_query_0000060",
+                                "ena_vrt",
+                                "ena_vtm",
+                                "vlpar_opendata_query_0000001",
+                                "vlpar_opendata_query_0000002"
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "size": 0,
+        "_source": {
+            "excludes": [
+                "*-*_*"
+            ]
+        },
+        "sort": {
+            "_score": "desc"
+        },
+        "from": 0,
+        "highlight": {
+            "max_analyzed_offset": 200000,
+            "pre_tags": [
+                "<span class='highlighted'>"
+            ],
+            "post_tags": [
+                "</span>"
+            ],
+            "fields": {
+                "*": {
+                    "number_of_fragments": 0
+                }
+            },
+            "require_field_match": false
+        },
+        "aggs": {
+            "publ": {
+                "terms": {
+                    "field": "publisher.name.keyword",
+                    "order": {
+                        "_count": "desc"
+                    },
+                    "size": 50
+                }
+            }
+        }
+    },
+    {
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "multi_match": {
+                            "query": "wever bart",
+                            "fields": [
+                                "@id",
+                                "identifier.value",
+                                "*_name",
+                                "*_headline",
+                                "isBasedOn.provider.name.keyword",
+                                "isBasedOn.provider.alternateName.keyword",
+                                "publisher.name.keyword",
+                                "*_articleBody",
+                                "creator.name",
+                                "author.name",
+                                "creator.alternateName",
+                                "author.alternateName",
+                                "sender.name",
+                                "sender.alternateName",
+                                "creator.name.@value",
+                                "author.name.@value",
+                                "creator.alternateName.@value",
+                                "author.alternateName.@value",
+                                "*_description",
+                                "*_keywords",
+                                "*_text"
+                            ],
+                            "operator": "or"
+                        }
+                    }
+                ],
+                "should": [],
+                "filter": [
+                    {
+                        "terms": {
+                            "isBasedOn.isPartOf.@id": [
+                                "belgapress_query_00021",
+                                "belgapress_query_00022",
+                                "belgapress_query_00023",
+                                "belgapress_query_00024",
+                                "belgapress_query_00027",
+                                "belgapress_query_00013",
+                                "belgapress_query_00014",
+                                "belgapress_query_00015",
+                                "ena_trial_01030703",
+                                "belgapress_query_00016",
+                                "belgapress_query_00017",
+                                "belgapress_query_00018",
+                                "belgapress_query_00019",
+                                "imdb-api_query_00001",
+                                "kadoc_ead_query_0000001",
+                                "scopearchiv_query_0000001",
+                                "youtube_query_00002",
+                                "youtube_query_00001",
+                                "belgapress_query_00001",
+                                "belgapress_query_00002",
+                                "belgapress_query_00007",
+                                "belgapress_query_00003",
+                                "belgapress_query_00004",
+                                "belgapress_query_00008",
+                                "belgapress_query_00009",
+                                "belgapress_query_00010",
+                                "belgapress_query_00005",
+                                "belgapress_query_00006",
+                                "belgapress_query_00020",
+                                "belgapress_query_00011",
+                                "europeana_query_00001",
+                                "plenum_query_0000001",
+                                "data_riksdagen_query_0000001",
+                                "tmdb_query_00001",
+                                "tiktok_query_0000001",
+                                "tiktok_query_0000002",
+                                "tiktok_query_0000004",
+                                "twitter_query_0000009",
+                                "twitter_query_0000005",
+                                "twitter_query_0000012",
+                                "twitter_query_0000011",
+                                "twitter_query_0000016",
+                                "twitter_query_0000015",
+                                "twitter_query_0000010",
+                                "twitter_query_0000006",
+                                "twitter_query_0000007",
+                                "twitter_query_0000014",
+                                "twitter_query_0000008",
+                                "twitter_query_0000013",
+                                "twitter_query_0000020",
+                                "twitter_query_0000018",
+                                "twitter_query_0000002",
+                                "twitter_query_0000001",
+                                "twitter_query_0000061",
+                                "twitter_query_0000059",
+                                "twitter_query_0000062",
+                                "twitter_query_0000060",
+                                "ena_vrt",
+                                "ena_vtm",
+                                "vlpar_opendata_query_0000001",
+                                "vlpar_opendata_query_0000002"
+                            ]
+                        }
+                    },
+                    {
+                        "range": {
+                            "_datePublished": {
+                                "gte": "2024-10-31"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "size": 0,
+        "_source": {
+            "excludes": [
+                "*-*_*"
+            ]
+        },
+        "sort": {
+            "_score": "desc"
+        },
+        "from": 0,
+        "highlight": {
+            "max_analyzed_offset": 200000,
+            "pre_tags": [
+                "<span class='highlighted'>"
+            ],
+            "post_tags": [
+                "</span>"
+            ],
+            "fields": {
+                "*": {
+                    "number_of_fragments": 0
+                }
+            },
+            "require_field_match": false
+        },
+        "aggs": {
+            "publ": {
+                "terms": {
+                    "field": "publisher.name.keyword",
+                    "order": {
+                        "_count": "desc"
+                    },
+                    "size": 50
+                }
+            }
+        }
+    },
+    {
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "multi_match": {
+                            "query": "wever bart regering vallen",
+                            "fields": [
+                                "@id",
+                                "identifier.value",
+                                "*_name",
+                                "*_headline",
+                                "isBasedOn.provider.name.keyword",
+                                "isBasedOn.provider.alternateName.keyword",
+                                "publisher.name.keyword",
+                                "*_articleBody",
+                                "creator.name",
+                                "author.name",
+                                "creator.alternateName",
+                                "author.alternateName",
+                                "sender.name",
+                                "sender.alternateName",
+                                "creator.name.@value",
+                                "author.name.@value",
+                                "creator.alternateName.@value",
+                                "author.alternateName.@value",
+                                "*_description",
+                                "*_keywords",
+                                "*_text"
+                            ],
+                            "operator": "and"
+                        }
+                    }
+                ],
+                "should": [],
+                "filter": [
+                    {
+                        "terms": {
+                            "isBasedOn.isPartOf.@id": [
+                                "belgapress_query_00021",
+                                "belgapress_query_00022",
+                                "belgapress_query_00023",
+                                "belgapress_query_00024",
+                                "belgapress_query_00027",
+                                "belgapress_query_00013",
+                                "belgapress_query_00014",
+                                "belgapress_query_00015",
+                                "ena_trial_01030703",
+                                "belgapress_query_00016",
+                                "belgapress_query_00017",
+                                "belgapress_query_00018",
+                                "belgapress_query_00019",
+                                "imdb-api_query_00001",
+                                "kadoc_ead_query_0000001",
+                                "scopearchiv_query_0000001",
+                                "youtube_query_00002",
+                                "youtube_query_00001",
+                                "belgapress_query_00001",
+                                "belgapress_query_00002",
+                                "belgapress_query_00007",
+                                "belgapress_query_00003",
+                                "belgapress_query_00004",
+                                "belgapress_query_00008",
+                                "belgapress_query_00009",
+                                "belgapress_query_00010",
+                                "belgapress_query_00005",
+                                "belgapress_query_00006",
+                                "belgapress_query_00020",
+                                "belgapress_query_00011",
+                                "europeana_query_00001",
+                                "plenum_query_0000001",
+                                "data_riksdagen_query_0000001",
+                                "tmdb_query_00001",
+                                "tiktok_query_0000001",
+                                "tiktok_query_0000002",
+                                "tiktok_query_0000004",
+                                "twitter_query_0000009",
+                                "twitter_query_0000005",
+                                "twitter_query_0000012",
+                                "twitter_query_0000011",
+                                "twitter_query_0000016",
+                                "twitter_query_0000015",
+                                "twitter_query_0000010",
+                                "twitter_query_0000006",
+                                "twitter_query_0000007",
+                                "twitter_query_0000014",
+                                "twitter_query_0000008",
+                                "twitter_query_0000013",
+                                "twitter_query_0000020",
+                                "twitter_query_0000018",
+                                "twitter_query_0000002",
+                                "twitter_query_0000001",
+                                "twitter_query_0000061",
+                                "twitter_query_0000059",
+                                "twitter_query_0000062",
+                                "twitter_query_0000060",
+                                "ena_vrt",
+                                "ena_vtm",
+                                "vlpar_opendata_query_0000001",
+                                "vlpar_opendata_query_0000002"
+                            ]
+                        }
+                    },
+                    {
+                        "range": {
+                            "_datePublished": {
+                                "gte": "2024-10-31"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "size": 0,
+        "_source": {
+            "excludes": [
+                "*-*_*"
+            ]
+        },
+        "sort": {
+            "_score": "desc"
+        },
+        "from": 0,
+        "highlight": {
+            "max_analyzed_offset": 200000,
+            "pre_tags": [
+                "<span class='highlighted'>"
+            ],
+            "post_tags": [
+                "</span>"
+            ],
+            "fields": {
+                "*": {
+                    "number_of_fragments": 0
+                }
+            },
+            "require_field_match": false
+        },
+        "aggs": {
+            "publ": {
+                "terms": {
+                    "field": "publisher.name.keyword",
+                    "order": {
+                        "_count": "desc"
+                    },
+                    "size": 50
+                }
+            }
+        }
+    },
+    {
+        "query": {
+            "bool": {
+                "must": {
+                    "bool": {
+                        "must": [
+                            {
+                                "multi_match": {
+                                    "query": "wever bart regering vallen",
+                                    "fields": [
+                                        "@id",
+                                        "identifier.value",
+                                        "*_name",
+                                        "*_headline",
+                                        "isBasedOn.provider.name.keyword",
+                                        "isBasedOn.provider.alternateName.keyword",
+                                        "publisher.name.keyword",
+                                        "*_articleBody",
+                                        "creator.name",
+                                        "author.name",
+                                        "creator.alternateName",
+                                        "author.alternateName",
+                                        "sender.name",
+                                        "sender.alternateName",
+                                        "creator.name.@value",
+                                        "author.name.@value",
+                                        "creator.alternateName.@value",
+                                        "author.alternateName.@value",
+                                        "*_description",
+                                        "*_keywords",
+                                        "*_text"
+                                    ],
+                                    "operator": "and"
+                                }
+                            }
+                        ],
+                        "should": [],
+                        "filter": [
+                            {
+                                "terms": {
+                                    "isBasedOn.isPartOf.@id": [
+                                        "belgapress_query_00021",
+                                        "belgapress_query_00022",
+                                        "belgapress_query_00023",
+                                        "belgapress_query_00024",
+                                        "belgapress_query_00027",
+                                        "belgapress_query_00013",
+                                        "belgapress_query_00014",
+                                        "belgapress_query_00015",
+                                        "ena_trial_01030703",
+                                        "belgapress_query_00016",
+                                        "belgapress_query_00017",
+                                        "belgapress_query_00018",
+                                        "belgapress_query_00019",
+                                        "imdb-api_query_00001",
+                                        "kadoc_ead_query_0000001",
+                                        "scopearchiv_query_0000001",
+                                        "youtube_query_00002",
+                                        "youtube_query_00001",
+                                        "belgapress_query_00001",
+                                        "belgapress_query_00002",
+                                        "belgapress_query_00007",
+                                        "belgapress_query_00003",
+                                        "belgapress_query_00004",
+                                        "belgapress_query_00008",
+                                        "belgapress_query_00009",
+                                        "belgapress_query_00010",
+                                        "belgapress_query_00005",
+                                        "belgapress_query_00006",
+                                        "belgapress_query_00020",
+                                        "belgapress_query_00011",
+                                        "europeana_query_00001",
+                                        "plenum_query_0000001",
+                                        "data_riksdagen_query_0000001",
+                                        "tmdb_query_00001",
+                                        "tiktok_query_0000001",
+                                        "tiktok_query_0000002",
+                                        "tiktok_query_0000004",
+                                        "twitter_query_0000009",
+                                        "twitter_query_0000005",
+                                        "twitter_query_0000012",
+                                        "twitter_query_0000011",
+                                        "twitter_query_0000016",
+                                        "twitter_query_0000015",
+                                        "twitter_query_0000010",
+                                        "twitter_query_0000006",
+                                        "twitter_query_0000007",
+                                        "twitter_query_0000014",
+                                        "twitter_query_0000008",
+                                        "twitter_query_0000013",
+                                        "twitter_query_0000020",
+                                        "twitter_query_0000018",
+                                        "twitter_query_0000002",
+                                        "twitter_query_0000001",
+                                        "twitter_query_0000061",
+                                        "twitter_query_0000059",
+                                        "twitter_query_0000062",
+                                        "twitter_query_0000060",
+                                        "ena_vrt",
+                                        "ena_vtm",
+                                        "vlpar_opendata_query_0000001",
+                                        "vlpar_opendata_query_0000002"
+                                    ]
+                                }
+                            },
+                            {
+                                "range": {
+                                    "_datePublished": {
+                                        "gte": "2024-10-31"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                "should": [],
+                "filter": [
+                    {
+                        "terms": {
+                            "creator.name.keyword": [
+                                "FLEUR MEES",
+                                "Wim Van de Velden"
+                            ]
+                        }
+                    },
+                    {
+                        "terms": {
+                            "printEdition.keyword": [
+                                "Kempen"
+                            ]
+                        }
+                    },
+                    {
+                        "terms": {
+                            "isBasedOn.provider.name.keyword": [
+                                "BelgaPress/GoPress"
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "size": 0,
+        "_source": {
+            "excludes": [
+                "*-*_*"
+            ]
+        },
+        "sort": {
+            "_score": "desc"
+        },
+        "from": 0,
+        "highlight": {
+            "max_analyzed_offset": 200000,
+            "pre_tags": [
+                "<span class='highlighted'>"
+            ],
+            "post_tags": [
+                "</span>"
+            ],
+            "fields": {
+                "*": {
+                    "number_of_fragments": 0
+                }
+            },
+            "require_field_match": false
+        },
+        "aggs": {
+            "filtered": {
+                "filters": {
+                    "filters": {
+                        "entities": {
+                            "term": {
+                                "prov:wasAttributedTo.name.keyword": "SpaCy"
+                            }
+                        }
+                    }
+                },
+                "aggs": {
+                    "ENRICHMENTS": {
+                        "nested": {
+                            "path": "prov:wasAttributedTo.prov:wasAssociatedFor"
+                        },
+                        "aggs": {
+                            "ALL": {
+                                "terms": {
+                                    "field": "prov:wasAttributedTo.prov:wasAssociatedFor._generated.ALL.keyword",
+                                    "size": 10
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "newssources": {
+                "terms": {
+                    "field": "publisher.name.keyword",
+                    "size": 10
+                }
+            }
+        }
+    },
+    {"query":{"query_string":{"fields":["*_name","*_headline"],"query":"wever"}},"size":0,"_source":{"excludes":["*-*_*"]},"sort":{"_score":"desc"},"from":0,"highlight":{"max_analyzed_offset":200000,"pre_tags":["<span class='highlighted'>"],"post_tags":["</span>"],"fields":{"*":{"number_of_fragments":0}},"require_field_match":false},"aggs":{"publ":{"terms":{"field":"publisher.name.keyword","order":{"_count":"desc"},"size":50}}}},
+    {"query":{"query_string":{"fields":["*_name","*_headline"],"query":"\"BRUSSELS MINISTER PRESIDENT DE WEVER\""}},"size":0,"_source":{"excludes":["*-*_*"]},"sort":{"_score":"desc"},"from":0,"highlight":{"max_analyzed_offset":200000,"pre_tags":["<span class='highlighted'>"],"post_tags":["</span>"],"fields":{"*":{"number_of_fragments":0}},"require_field_match":false},"aggs":{"publ":{"terms":{"field":"publisher.name.keyword","order":{"_count":"desc"},"size":50}}}}
+    
+]

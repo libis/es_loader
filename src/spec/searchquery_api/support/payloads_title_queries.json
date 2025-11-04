@@ -1,0 +1,35 @@
+[
+    {
+        "query": {
+            "query_string": {
+                "fields": [
+                    "*_name",
+                    "*_headline"
+                ],
+                "query": "water"
+            }
+        }
+    },
+    {
+        "query": {
+            "query_string": {
+                "fields": [
+                    "*_name",
+                    "*_headline"
+                ],
+                "query": "\"Smoke on the water\""
+            }
+        }
+    },
+    {
+        "query": {
+            "query_string": {
+                "fields": [
+                    "*_name",
+                    "*_headline"
+                ],
+                "query": "Smoke on the water*"
+            }
+        }
+    }
+]

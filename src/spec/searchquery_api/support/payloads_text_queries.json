@@ -1,0 +1,38 @@
+[
+    {
+        "query": {
+            "query_string": {
+                "fields": [
+                    "*_articleBody",
+                    "*_description",
+                    "*_text"
+                ],
+                "query": "goedbedoelde nonsens"
+            }
+        }
+    },
+    {
+        "query": {
+            "query_string": {
+                "fields": [
+                    "*_articleBody",
+                    "*_description",
+                    "*_text"
+                ],
+                "query": "\"goedbedoelde nonsens\""
+            }
+        }
+    },
+    {
+        "query": {
+            "query_string": {
+                "fields": [
+                    "*_articleBody",
+                    "*_description",
+                    "*_text"
+                ],
+                "query": "Menu met gevangen gans*"
+            }
+        }
+    }
+]

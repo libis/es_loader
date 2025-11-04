@@ -1,0 +1,22 @@
+[
+    {
+        "query": {
+            "query_string": {
+                "fields": [
+                    "volumeNumber"
+                ],
+                "query": "ds"
+            }
+        }
+    },
+    {
+        "query": {
+            "query_string": {
+                "fields": [
+                    "issueNumber"
+                ],
+                "query": "ds"
+            }
+        }
+    }
+]

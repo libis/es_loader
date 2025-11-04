@@ -1,0 +1,12 @@
+[
+    {
+        "query": {
+            "query_string": {
+                "fields": [
+                    "printEdition.keyword"
+                ],
+                "query": "Economie*"
+            }
+        }
+    }
+]

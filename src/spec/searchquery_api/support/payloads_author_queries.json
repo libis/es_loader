@@ -1,0 +1,81 @@
+[
+    {
+        "query": {
+            "query_string": {
+                "fields": [
+                    "creator.name",
+                    "author.name",
+                    "creator.alternateName",
+                    "author.alternateName",
+                    "creator.name.@value",
+                    "author.name.@value",
+                    "creator.alternateName.@value",
+                    "author.alternateName.@value"
+                ],
+                "query": "\"Theo Jans 🌱🌿🌳🌳\""
+            }
+        }
+    },
+    {
+        "query": {
+            "query_string": {
+                "fields": [
+                    "creator.name",
+                    "author.name",
+                    "creator.alternateName",
+                    "author.alternateName",
+                    "creator.name.@value",
+                    "author.name.@value",
+                    "creator.alternateName.@value",
+                    "author.alternateName.@value"
+                ],
+                "query": "Theo Jans 🌳🌳"
+            }
+        }
+    },
+    {
+        "query": {
+            "query_string": {
+                "fields": [
+                    "creator.name",
+                    "author.name",
+                    "creator.alternateName",
+                    "author.alternateName",
+                    "creator.name.@value",
+                    "author.name.@value",
+                    "creator.alternateName.@value",
+                    "author.alternateName.@value"
+                ],
+                "query": "Theo Jans*"
+            }
+        }
+    },
+    {
+        "query": {
+            "query_string": {
+                "fields": [
+                    "creator.name",
+                    "author.name",
+                    "creator.alternateName",
+                    "author.alternateName",
+                    "creator.name.@value",
+                    "author.name.@value",
+                    "creator.alternateName.@value",
+                    "author.alternateName.@value"
+                ],
+                "query": "\"Theo Jans\""
+            }
+        }
+    },
+    {
+        "query": {
+            "query_string": {
+                "fields": [
+                    "sender.name",
+                    "sender.alternateName"
+                ],
+                "query": "Armand Vervaeck"
+            }
+        }
+    }
+]

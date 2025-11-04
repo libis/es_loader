@@ -1,0 +1,25 @@
+[
+    {
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "multi_match": {
+                            "query": "iCANDID_twitter_308532596797743105",
+                            "fields": [
+                                "@id"
+                            ],
+                            "operator": "and"
+                        }
+                    }
+                ]
+            }
+        },
+        "size": 0,
+        "_source": {
+            "excludes": [
+                "*-*_*"
+            ]
+        }
+    }   
+]

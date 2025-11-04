@@ -1,0 +1,13 @@
+[
+    {
+        "query": {
+            "query_string": {
+                "fields": [
+                    "isBasedOn.isPartOf.name.keyword",
+                    "isBasedOn.isPartOf.@id"
+                ],
+                "query": "twitter_query_0000002"
+            }
+        }
+    }
+]

@@ -1,0 +1,13 @@
+[
+    {
+        "query": {
+            "query_string": {
+                "fields": [
+                    "isBasedOn.provider.name.keyword",
+                    "isBasedOn.provider.alternateName.keyword"
+                ],
+                "query": "\"KADOC scopeArchiv\""
+            }
+        }
+    }
+]
