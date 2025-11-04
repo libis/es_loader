@@ -12,6 +12,7 @@ require 'faraday_middleware'
 # SEARCH_URL = 'https://icandid.t.libis.be'
 # SEARCH_URL = 'http://localhost:9292'
 SEARCH_URL = 'http://host.docker.internal:9292'
+ES_INDEX = 'icandid'
 API_KEY = 'check your profile in iCANDID' 
 
 require 'json'
@@ -28,7 +29,7 @@ describe 'Search index API with Faraday - Parallel Payloads' do
   end
 
   def search(conn, api_key, payload)
-    conn.post('/icandid/_search') do |req|
+    conn.post("/#{ES_INDEX}/_search") do |req|
       req.headers['APIKEY'] = api_key
       req.headers['Content-Type'] = 'application/json'
       req.body = payload
@@ -38,9 +39,12 @@ describe 'Search index API with Faraday - Parallel Payloads' do
   # Load payloads immediately 
   all_payloads = []
   if ENV['INDEX'].nil?
+
     queries_dir = File.expand_path("./support/", __dir__)
     Dir.entries(queries_dir).select { |f| f.match(/^payloads_.*_queries\.json$/) }.each do |file|
+
       full_path = File.join(queries_dir, file)
+          pp "=====================>>>>> #{full_path}"
       all_payloads.concat JSON.parse(File.read(full_path))
     end
   else

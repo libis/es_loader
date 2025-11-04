@@ -4,12 +4,21 @@
             "bool": {
                 "must": [
                     {
-                        "multi_match": {
-                            "query": "iCANDID_twitter_308532596797743105",
+                        "query_string": {
                             "fields": [
-                                "@id"
+                                "isBasedOn.provider.name.keyword",
+                                "isBasedOn.provider.alternateName.keyword"
                             ],
-                            "operator": "and"
+                            "query": "\"Twitter\""
+                        }
+                    }
+                ],
+                "filter": [
+                    {
+                        "terms": {
+                            "identifier.name": [
+                                "retweeted_tweet_id"
+                            ]
                         }
                     }
                 ]
@@ -21,5 +30,5 @@
                 "*-*_*"
             ]
         }
-    }   
+    }
 ]

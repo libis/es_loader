@@ -1,0 +1,104 @@
+[
+    {
+        "query": {
+            "bool": {
+                "must": {
+                    "bool": {
+                        "must": [
+                            {
+                                "range": {
+                                    "_datePublished": {
+                                        "gte": "2025-01-01",
+                                        "lte": "2025-07-01"
+                                    }
+                                }
+                            },
+                            {
+                                "query_string": {
+                                    "fields": [
+                                        "*_articleBody",
+                                        "*_description",
+                                        "*_text"
+                                    ],
+                                    "query": "De Vlaamse overheid denkt dat mijn vader een axolotl is."
+                                }
+                            }
+                        ]
+                    }
+                },
+                "filter": [
+                    {
+                        "terms": {
+                            "isBasedOn.provider.name.keyword": [
+                                "BelgaPress/GoPress"
+                            ]
+                        }
+                    },
+                    {
+                        "terms": {
+                            "printEdition.keyword": [
+                                "Limburg"
+                            ]
+                        }
+                    },
+                    {
+                        "terms": {
+                            "publisher.name.keyword": [
+                                "De Standaard"
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "query": {
+            "bool": {
+                "must": {
+                    "bool": {
+                        "must": [
+                            {
+                                "range": {
+                                    "_datePublished": {
+                                        "gte": "2025-01-01",
+                                        "lte": "2025-07-01"
+                                    }
+                                }
+                            },
+                            {
+                                "query_string": {
+                                    "fields": [
+                                        "*_articleBody",
+                                        "*_description",
+                                        "*_text"
+                                    ],
+                                    "query": "De Vlaamse overheid denkt dat mijn vader een axolotl is."
+                                }
+                            }
+                        ]
+                    }
+                },
+                "should": [],
+                "filter": [
+                    {
+                        "terms": {
+                            "creator.name.keyword": [
+                                "JOERI SEYMORTIER"
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "_source": {
+            "excludes": [
+                "*-*_*"
+            ]
+        },
+        "sort": {
+            "creator.name.keyword": "asc"
+        }
+     
+    }
+]
