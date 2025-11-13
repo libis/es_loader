@@ -176,7 +176,7 @@ class DataModelBuilder
   end
 
   def setup_prefixes
-    @config[:vocabularies].each { |k,v|
+    @config[:datamodel][:vocabularies].each { |k,v|
       VOCABULARIES[k.to_s] = v
     }
     @prefixes = VOCABULARIES.keys
@@ -327,7 +327,9 @@ class DataModelBuilder
       props.each { |x| csv << x.values }
     end
 
-    File.write("/app/elastic/datamodel/_ENTITIES.csv", csv_data)
+    File.open(File.join( @loader.config[:config][:datamodel][:output_dir], "_ENTITIES.csv"), "w") do |file|
+      file.write(csv_data)
+    end
     @datamodel.delete(:_ENTITIES)
   end
 
@@ -347,7 +349,10 @@ class DataModelBuilder
         props.each { |x| csv << x.values }
       end
 
-      File.write("/app/elastic/datamodel/#{entity_name}.csv", csv_data)
+      
+      File.open( File.join( @loader.config[:config][:datamodel][:output_dir], "#{entity_name}.csv") , "w") do |file|
+        file.write(csv_data)
+      end
     end
   end
 end

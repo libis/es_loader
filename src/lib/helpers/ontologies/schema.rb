@@ -4,7 +4,10 @@ def load_schema_ontology
   url = 'https://schema.org/version/latest/schemaorg-current-https.jsonld'
   response = RestClient.get(url)
   @schema_org_jsonld = JSON.parse(response)
-  File.write("/app/elastic/datamodel/schema_org.json", @schema_org_jsonld)
+ 
+  File.open( File.join( @loader.config[:config][:datamodel][:output_dir], 'schema_org.json') , "w") do |file|
+    file.write(@schema_org_jsonld)
+  end
 end
 
 def process_schema_entity(entity:)
