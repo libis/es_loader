@@ -54,7 +54,7 @@ ruby reindex_subset.rb -c reindex_config.yml
 ruby /app/src/load_to_es.rb -c config_google_ai.yml -u 2020-01-01
 
 => local
-docker-compose run es_loader_dev bash -c "ruby /app/src/load_to_es.rb -c icandid_test.yml -t update -d scopeArchiv/kadoc_ead_query_0000001/ -p '*00.json' -u '2000-01-01 12:00'"
+docker-compose run es_loader_dev bash -c "ruby /app/src/load_to_es.rb -c icandid_test.yml -t update -d scopeArchiv/kadoc_ead_query_0000001/ -p '.*00.json' -u '2000-01-01 12:00'"
 
 docker-compose run es_loader_dev bash -c "ruby /app/src/load_to_es.rb -c config_google_ai_vision_api.yml -u '2000-01-01 12:00'"
 
@@ -69,9 +69,9 @@ ruby /app/src/load_to_es.rb -c config_whisper_turbo_ena.yml -t enrichtment -u '2
 
 ruby /app/src/build_model.rb -c icandid_mapping.yml
 
-# TESTS
+# Tests for iCANDID search API
 # 
-rake api_tests API_KEY=************* 
+rake api_tests API_KEY=************* INDEX=any,title,author --trace
 rake api_tests API_KEY=************* INDEX=any,title,author --trace
  
 # Run all api tests (in parallel)

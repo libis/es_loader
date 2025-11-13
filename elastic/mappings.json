@@ -1897,15 +1897,26 @@
           }
         }
       },
-      "locationCreated": {
-        "type": "text",
-        "fields": {
-          "keyword": {
-            "type": "keyword",
-            "ignore_above": 256
+      "locationCreated" : {
+          "properties" : {
+            "@id": {
+              "type": "keyword",
+              "index": false
+            },
+            "@type": {
+              "type": "keyword",
+              "index": false
+            },
+            "alternateName" : {
+              "type" : "keyword",
+              "ignore_above": 256
+            },
+            "name" : {
+              "type" : "keyword",
+              "ignore_above": 256
+            }
           }
-        }
-      },
+        },
       "lt-Latn_alternateName": {
         "type": "text",
         "analyzer": "lithuanian"

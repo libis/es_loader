@@ -17,3 +17,19 @@ VERSION_TAG
 
 ## v7.5.0_20250417 ##
 => one_merged_record_providers
+
+## v7.5.0_20250530 ##
+=> missing uuid
+
+## v7.5.0_20250801 ##
+=> snapshots
+
+## v7.5.0_20251003 ##
+=> loading enrichments
+
+## v7.5.0_20251104 ##
+=> iCANDID index testing
+
+## v7.5.0_20251113 ##
+=> update uuid
+=> build datamodel (csv) from elasticsearch mapping

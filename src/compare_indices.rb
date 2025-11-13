@@ -5,10 +5,10 @@ require_relative './lib/loader'
 
 ##########
 
-SOURCE_URL = "https://icandid_admin:ibandid_admin@host.docker.internal:9292"
+SOURCE_URL = "https://icandid_admin:ibandid_admin@host.docker.internal:9200"
 SOURCE_INDEX = "icandid_20250606"
 TARGET_URL = "https://icandid_admin:ibandid_admin@host.docker.internal:9222"
-TARGET_INDEX = "icandid"
+TARGET_INDEX = "icandid_20251006"
 
 #field_to_compare = "isBasedOn.provider.@id"
 field_to_compare = "isBasedOn.isPartOf.@id"
@@ -131,27 +131,6 @@ rescue StandardError => e
   exit
 
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
