@@ -116,8 +116,11 @@ class DataModelBuilder
 
     @logger.info "Process properties of ElasticSearch Mapping"
     process_properties(properties: properties, parent_prop: nil)
+    @logger.info "Export Entities to csv"
     export_entities_to_csv
+    @logger.info "Export datamodel to csv"
     export_datamodel_to_csv
+    @logger.info "DATAMODEL CSV FILES ARE CREATED"
   rescue => e
     pp e
     pp "--> RESCUE StandardError"
@@ -264,8 +267,8 @@ class DataModelBuilder
 
   def setup_prod_loader
     @prod_loader = Loader.new
-    @prod_loader.es_url = @loader.config[:config][:es_url]
-    @prod_loader.es_version = @loader.config[:config][:es_version]
+    @prod_loader.es_url = @config[:es_url]
+    @prod_loader.es_version = @config[:es_version]
     @prod_loader.check_elastic
   end
 
@@ -306,11 +309,6 @@ class DataModelBuilder
     pp @types
   end
 
-
-
-
-
-
   #def process_properties(properties:, parent_prop:)
     # Assuming this is a method defined elsewhere
   #  ::process_properties(properties: properties, parent_prop: parent_prop)
@@ -327,7 +325,7 @@ class DataModelBuilder
       props.each { |x| csv << x.values }
     end
 
-    File.open(File.join( @loader.config[:config][:datamodel][:output_dir], "_ENTITIES.csv"), "w") do |file|
+    File.open(File.join( @config[:datamodel][:output_dir], "_ENTITIES.csv"), "w") do |file|
       file.write(csv_data)
     end
     @datamodel.delete(:_ENTITIES)
@@ -349,8 +347,7 @@ class DataModelBuilder
         props.each { |x| csv << x.values }
       end
 
-      
-      File.open( File.join( @loader.config[:config][:datamodel][:output_dir], "#{entity_name}.csv") , "w") do |file|
+      File.open( File.join( @config[:datamodel][:output_dir], "#{entity_name}.csv") , "w") do |file|
         file.write(csv_data)
       end
     end

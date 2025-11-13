@@ -61,7 +61,7 @@ def process_prov_entity(entity: nil)
 
   result = {}
   result[:Name]        = "prov:#{ prov_entity["label"] }"
-  result[:NamePlural]  = "prov:#{prov_entity["label"].pluralize}", 
+  result[:NamePlural]  = "prov:#{prov_entity["label"].pluralize}" 
   result[:Description] = prov_entity["Description"]["@value"]&.gsub(/[\r\n]/, "")&.strip  || prov_entity["Description"]&.gsub(/[\r\n]/, "")&.strip
   result[:subClassOf]  = subClassOf
   result[:sameAs]      = ""

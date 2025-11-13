@@ -5,7 +5,7 @@ def load_schema_ontology
   response = RestClient.get(url)
   @schema_org_jsonld = JSON.parse(response)
  
-  File.open( File.join( @loader.config[:config][:datamodel][:output_dir], 'schema_org.json') , "w") do |file|
+  File.open( File.join( @config[:datamodel][:output_dir], 'schema_org.json') , "w") do |file|
     file.write(@schema_org_jsonld)
   end
 end
@@ -36,8 +36,6 @@ def process_schema_entity(entity:)
     subClassOf:  schema_entity.dig("rdfs:subClassOf", "@id"),
     sameAs:      schema_entity["@id"]
   }
-
-
 
   @datamodel[:_ENTITIES] << result
 
