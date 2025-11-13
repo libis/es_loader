@@ -23,12 +23,22 @@ class Array
 end
 
 def deep_sort_hash(hash)
+  if hash.is_a?(Array)
+    if hash.size === 1
+      v=hash[0]
+      return v.is_a?(Hash) ||v.is_a?(Array) ? deep_sort_hash(v) : v 
+    end
+    sorted = hash.sort_by do |hash|
+      hash.key?("@id") ? [0, hash["@id"]] : [1, hash["start"]]
+    end
+    return sorted.map { |v| v.is_a?(Hash) ||v.is_a?(Array)  ? deep_sort_hash(v) : v }
+  end
   sorted = hash.sort.to_h
   sorted.each do |key, value|
     if value.is_a?(Hash)
       sorted[key] = deep_sort_hash(value)
     elsif value.is_a?(Array)
-      sorted[key] = value.map { |v| v.is_a?(Hash) ? deep_sort_hash(v) : v }
+      sorted[key] = value.map { |v| v.is_a?(Hash) ||v.is_a?(Array)  ? deep_sort_hash(v) : v }
     end
   end
   sorted

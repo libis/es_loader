@@ -19,7 +19,6 @@ def process_prov_entity(entity: nil)
   
   prov_entities = JsonPath.on(@prov_jsonld['RDF'], '*[?(@.label == '+ entity.gsub(/^prov:/, '') +')]')
   if prov_entities.nil?
-    pp "==========================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
     prov_entities = JsonPath.on(@prov_jsonld['RDF'], 'ObjectProperty[?(@.label == '+ (entity.gsub(/^prov:/, '').downcase) +')]')
   end
 
@@ -30,9 +29,7 @@ def process_prov_entity(entity: nil)
     if entity == "prov:SoftwareAgent"
       prov_entities =  prov_entities.select{ |s| s["subClassOf"]["_rdf:resource"] == "http://www.w3.org/ns/prov#Agent" }
     else
-      pp prov_entities
       prov_entity =  prov_entities.first
-      pp prov_entity["subClassOf"]
       raise "process_entity: prov_entities returns more than 1 entity"
     end
   end
@@ -78,7 +75,6 @@ def process_prov_property(property: nil)
 
   property_params = JsonPath.on(@prov_jsonld['RDF'], '*[?(@.label == '+ property.gsub(/^prov:/, '') +')]')
   if property_params.nil?
-    pp "==========================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
     property_params = JsonPath.on(@prov_jsonld['RDF'], 'ObjectProperty[?(@.label == '+ (property.gsub(/^prov:/, '').downcase) +')]')
   end
 

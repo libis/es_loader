@@ -73,7 +73,7 @@ class DataModelBuilder
     prepare_aggregations
 
     pp "===> GET TYPE AGGREGATIONS"
-    # fetch_types_from_aggregations
+    #fetch_types_from_aggregations
 
     @types = [
       "NewsArticle",

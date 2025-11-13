@@ -7,8 +7,6 @@ end
 
 def process_properties(properties: {}, parent_prop: nil)
   # Define keys to exclude
-
-
   excluded_keys = %w[
     id @context @type prov:type
     dateCreated_time_frame datePublished_time_frame processingTime processingtime
@@ -31,12 +29,26 @@ def process_properties(properties: {}, parent_prop: nil)
 
     # Handle nested properties with @type
     if prop_value["properties"]&.key?("@type")
+      # Special case: 
+
       @logger.info "Processing nested properties for #{prop_key}"
       process_properties(properties: prop_value["properties"], parent_prop: current_parent_prop)
 
       if prop_key == "prov:wasAssociatedFor"
-        # Special case: skip this prov property
-        next
+        pp @datamodel.keys
+        @datamodel["schema:Thing".to_sym] << {
+          Name: "prov:wasAssociatedFor",
+          Description: "is inverse of prov:wasAssociatedWith",
+          "MIN": nil,
+          "MAX": nil,
+          sameAs: "prov:wasAssociatedFor",
+          datatype: "prov:Agent,schema:agent",
+          Remark: ""
+        }
+        prop_key = "prov:wasAssociatedWith"
+
+
+
       end
     end
 
