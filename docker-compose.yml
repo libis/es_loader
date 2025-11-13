@@ -17,6 +17,7 @@ services:
       - ./elastic:/app/elastic
       - ./src:/app/src
       - ../../iCANDID/records:/records
+      - ../../iCANDID/source_records/:/source_records
       - ../../iCANDID/records_test:/records_test
       - ../../iCANDID/es_loader/logs:/app/logs
 
@@ -26,7 +27,7 @@ services:
     networks: 
       - data_network
     env_file:
-      - .env_loader      
+      - .env_loader
     volumes:
       - ./config:/app/config
       - ./logs:/app/logs/
