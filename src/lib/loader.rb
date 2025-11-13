@@ -120,7 +120,7 @@ class Loader
       @log_file = STDOUT
     end
 
-    @logger = Logger.new(@log_file)
+    # @logger = Logger.new(@log_file)
     @logger.debug("config_file: #{ @config_file} " )
     @logger.debug("log_file: #{ @log_file} " )
     @logger.debug("command_line_options: #{ @command_line_options} " )

@@ -13,7 +13,6 @@ require 'date'
 #    @config ||= ConfigFile
 #end
 
-ONLY_ONE_VALUE_ALLOWED = ["name","headline","articleBody","description"]
 CONTEXT = {
               "@vocab" => "https://schema.org/",
               "prov:wasAssociatedFor" => {
@@ -23,9 +22,6 @@ CONTEXT = {
               "@language" => "nl-Latn",
               "prov" => "https://www.w3.org/ns/prov#"
           }
-          
-UUID_URL_PREFIX = "https://icandid.libis.be/_/"
-
 
 def default_options
   { 
@@ -130,6 +126,9 @@ end
 
 def create_record(jsondata)
 
+  if @config[:datamodel].nil?
+    raise "Config must contain datamodel"
+  end
   if jsondata['@context'].nil?
     raise "jsondata['@context'] is nil !"
   end
@@ -148,7 +147,7 @@ def create_record(jsondata)
     lang = jsondata["@context"]["@language"] 
   end
 
-  jsondata["@context"] = CONTEXT
+  jsondata["@context"] = @config[:datamodel][:context]
   jsondata["@context"]["@language"] = lang
  
   fromprocessingtime = Time.now.strftime("%Y-%m-%d %H:%M:%S")
@@ -162,7 +161,7 @@ def create_record(jsondata)
   end
 
   unless  jsondata["citation"].nil?
-      jsondata["citation"]["@context"] = CONTEXT
+      jsondata["citation"]["@context"] = @config[:datamodel][:context]
       unless  jsondata["citation"]["citation"].nil?
           jsondata["citation"].delete("citation") 
       end 
@@ -320,8 +319,9 @@ def merge_json(data_array)
               # puts "equal #{key}"
               v1
             else
-              if ONLY_ONE_VALUE_ALLOWED.include?(key)
-                puts "inspect key #{key.inspect}"
+             
+              if @config[:datamodel][:single_value_properties].include?(key)
+                # puts "inspect key #{key.inspect}"
                 v2
               elsif v1.is_a?(Array)
                 if v2.is_a?(Array)
@@ -433,15 +433,20 @@ def add_uuid( data)
     uuid_url = "#{@config[:uuid_config][:url]}/#{data["@id"]}?by=#{@config[:uuid_config][:by]}&for=#{@config[:uuid_config][:for]}&resolvable=#{@config[:uuid_config][:resolvable]}"
     uuid_generator_response = HTTP.get(uuid_url)
 
+    @logger.debug ("uuid_generator_response status: #{uuid_generator_response.status}")
+    @logger.debug ("uuid_generator_response body: #{uuid_generator_response.body}")
+
     if uuid_generator_response.status == 201
-      uuid = uuid_generator_response.parse
+      # uuid = uuid_generator_response.parse
+      uuid = uuid_generator_response.parse["string"]
     end
     if uuid_generator_response.status == 400
       uuid = uuid_generator_response.parse["uuid"]
     end
-    
-    data["@uuid"] = uuid
-    data["url"] = URI::join(UUID_URL_PREFIX, uuid).to_s
+    if @config[:uuid_config][:url_prefix].nil?
+      raise "url_prefix is missing in uuid_config in config-file"
+    end
+    data["url"] = URI::join( URI(@config[:uuid_config][:url_prefix]), uuid).to_s
 
   end
 
