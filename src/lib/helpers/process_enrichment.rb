@@ -1,5 +1,30 @@
 #encoding: UTF-8 
 
+# loop over the enrichment[:data] and check if it must be added to or replace the data in d
+# based in ["prov:wasAttributedTo"][@id] and ["prov:wasAssociatedFor"]["@id"]
+# The data model is 
+# "prov:wasAttributedTo" : [ 
+#   { 
+#        @id: 
+#        "prov:wasAssociatedFor" : [
+#          {
+#             @id:
+#             "prov:generated":
+#          }
+#        ]
+#    }
+# ]
+#
+# What to do with the new values in "prov:generated"
+# What if the @id is equal but the "prov:used" or the "prov:generatedAtTime" is different
+# Add to existing of replace ?
+#
+# "prov:generated" will be merged to unique values.
+# prov:wasAttributedTo.prov:wasAssociatedFor.@id must be equal
+
+# ToDo enrichment[:data]["prov:wasAttributedTo"].nil?  ????
+# ==> enrichment[:data].nil ==> Must "prov:wasAttributedTo" be deleted ?
+
 def process_enrichment(enrichment, d)
   return if enrichment[:data].nil?
 
