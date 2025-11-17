@@ -147,7 +147,7 @@ def create_record(jsondata)
     lang = jsondata["@context"]["@language"] 
   end
 
-  jsondata["@context"] = @config[:datamodel][:context]
+  jsondata["@context"] = @config[:datamodel][:context].transform_keys(&:to_s)
   jsondata["@context"]["@language"] = lang
  
   fromprocessingtime = Time.now.strftime("%Y-%m-%d %H:%M:%S")
@@ -431,18 +431,34 @@ def add_uuid( data)
   unless data["@id"].nil?
    
     uuid_url = "#{@config[:uuid_config][:url]}/#{data["@id"]}?by=#{@config[:uuid_config][:by]}&for=#{@config[:uuid_config][:for]}&resolvable=#{@config[:uuid_config][:resolvable]}"
-    uuid_generator_response = HTTP.get(uuid_url)
 
-    @logger.debug ("uuid_generator_response status: #{uuid_generator_response.status}")
-    @logger.debug ("uuid_generator_response body: #{uuid_generator_response.body}")
+    http = HTTP
+    uri = URI.decode_www_form_component("#{uuid_url.to_s}")
+    http_response = http.follow.get(uri.to_s, {})
 
-    if uuid_generator_response.status == 201
-      # uuid = uuid_generator_response.parse
-      uuid = uuid_generator_response.parse["string"]
+    @logger.debug ("http_response status: #{http_response.status}")
+    @logger.debug ("http_response body: #{http_response.body}")
+
+    uuid_data = JSON.parse( http_response.body.to_s )
+
+    case http_response.status
+    when 200..299
+        if uuid_data.has_key?("uuid")
+            uuid = uuid_data["uuid"]
+        else 
+            raise "Error while creating UUID in basic_schema.rb rules"
+        end
+    when 400
+        if uuid_data.has_key?("created") &&  uuid_data.has_key?("to_uuid") &&  uuid_data.has_key?("uuid")
+            uuid = uuid_data["to_uuid"]
+        elsif uuid_data.has_key?("created") &&  uuid_data.has_key?("from_uuid") &&  uuid_data.has_key?("uuid")
+            uuid = uuid_data["uuid"]
+        else
+            raise "Error while creating UUID in basic_schema.rb rules"
+        end
     end
-    if uuid_generator_response.status == 400
-      uuid = uuid_generator_response.parse["uuid"]
-    end
+
+    data["@uuid"] = uuid
     if @config[:uuid_config][:url_prefix].nil?
       raise "url_prefix is missing in uuid_config in config-file"
     end
