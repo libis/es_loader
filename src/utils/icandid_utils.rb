@@ -445,8 +445,10 @@ def add_uuid( data)
     when 200..299
         if uuid_data.has_key?("uuid")
             uuid = uuid_data["uuid"]
+        elsif uuid_data.has_key?("string")
+            uuid = uuid_data["string"]
         else 
-            raise "Error while creating UUID in basic_schema.rb rules"
+            raise "Error [#{http_response.status}] while creating UUID with #{uuid_url}"
         end
     when 400
         if uuid_data.has_key?("created") &&  uuid_data.has_key?("to_uuid") &&  uuid_data.has_key?("uuid")
@@ -454,7 +456,7 @@ def add_uuid( data)
         elsif uuid_data.has_key?("created") &&  uuid_data.has_key?("from_uuid") &&  uuid_data.has_key?("uuid")
             uuid = uuid_data["uuid"]
         else
-            raise "Error while creating UUID in basic_schema.rb rules"
+            raise "Error [#{http_response.status}] while creating UUID with #{uuid_url}"
         end
     end
 
