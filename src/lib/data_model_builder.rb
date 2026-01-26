@@ -11,7 +11,7 @@ require_relative './config'
 
 DEFAULT_TYPE_KEY = "@type"
 DEFAULT_VOCABULARY  = "http://schema.org/"
-
+DEFAULT_PREFIX = "icandid"
 
 VOCABULARIES= {
   "owl"    => "http://www.w3.org/2002/07/owl#",
@@ -57,6 +57,8 @@ class DataModelBuilder
       @datamodel[:_DATATYPES] = @predefined_types
     end
 
+
+    @default_prefix = "icandid"
   end
 
   def run
@@ -414,7 +416,7 @@ class DataModelBuilder
     metadata_fields = [:_DATATYPES,:_ENTITIES,:_PREFIXES]
     
     @datamodel[:_PREFIXES].map! { |p| 
-      if p[:Prefix] == @default_prefix
+      if p[:Prefix] == DEFAULT_PREFIX
         p[:Base] = '*'
       end
       p
