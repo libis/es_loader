@@ -6,6 +6,9 @@ config/*
 !config/example_config.yml
 src/test/*
 /.env_loader
-/elastic/datamodel/*.csv
+/elastic/*.csv
+/elastic/*/*.csv
 /elastic/*.json
+/elastic/*/*.json
+/elastic/datamodel_config/*
 /logs/*

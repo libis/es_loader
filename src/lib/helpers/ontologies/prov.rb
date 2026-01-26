@@ -68,87 +68,94 @@ def process_prov_entity(entity: nil)
 end
 
 def process_prov_property(property: nil)
-  prefix = ""
-  property = property.start_with?(prefix) ? property : "#{prefix}#{property}"
-  
-  @logger.info  "get prov property: #{property}"
+  begin
+    prefix = ""
+    property = property.start_with?(prefix) ? property : "#{prefix}#{property}"
+    
+    @logger.info  "get prov property: #{property}"
 
-  property_params = JsonPath.on(@prov_jsonld['RDF'], '*[?(@.label == '+ property.gsub(/^prov:/, '') +')]')
-  if property_params.nil?
-    property_params = JsonPath.on(@prov_jsonld['RDF'], 'ObjectProperty[?(@.label == '+ (property.gsub(/^prov:/, '').downcase) +')]')
-  end
+    property_params = JsonPath.on(@prov_jsonld['RDF'], '*[?(@.label == '+ property.gsub(/^prov:/, '') +')]')
+    if property_params.nil?
+      property_params = JsonPath.on(@prov_jsonld['RDF'], 'ObjectProperty[?(@.label == '+ (property.gsub(/^prov:/, '').downcase) +')]')
+    end
 
-  property_params = property_params.select{ |s| ! (s["range"].nil? || s["domain"].nil?) } 
-  property_params = property_params.uniq { |hash| Marshal.dump(hash) }
+    property_params = property_params.select{ |s| ! (s["range"].nil? || s["domain"].nil?) } 
+    property_params = property_params.uniq { |hash| Marshal.dump(hash) }
 
-  if property_params.size > 1
-    raise "property_params: property_params returns more than 1 entity"
-  end
+    if property_params.size > 1
+      raise "property_params: property_params returns more than 1 entity"
+    end
 
 
-  property_params = property_params.first
+    property_params = property_params.first
 
   #pp "-- property_params --"
   #pp property_params
   #pp "---------------------"
 
-  description_fields = [ "definition", "editorsDefinition" , "comment" ]
+    description_fields = [ "definition", "editorsDefinition" , "comment" ]
 
-  property_params["Description"] = description_fields.map do |df|
-    if property_params.has_key?(df)
-      if property_params[df].is_a?(String)
-        ret = property_params[df]
-      end
-      if property_params[df].is_a?(Hash)
-        if property_params[df].has_key?("$text")
-          ret = property_params[df]["$text"]
+    
+
+    property_params["Description"] = description_fields.map do |df|
+      if property_params.has_key?(df)
+        if property_params[df].is_a?(String)
+          ret = property_params[df]
+        end
+        if property_params[df].is_a?(Hash)
+          if property_params[df].has_key?("$text")
+            ret = property_params[df]["$text"]
+          end
         end
       end
+      ret
+    end.compact.join('; ')
+
+    unless property_params["range"].nil?
+      datatype = property_params["range"]["_rdf:resource"].gsub(/http:\/\/www.w3.org\/ns\/prov#/,'prov:') 
+      datatype = datatype.gsub(/http:\/\/www.w3.org\/2001\/XMLSchema#(\w+)/) { |match| "#{$1[0].upcase}#{$1[1..]}" }
     end
-    ret
-  end.compact.join('; ')
+    unless property_params["domain"].nil?
+      entity = property_params["domain"]["_rdf:resource"].gsub(/http:\/\/www.w3.org\/ns\/prov#/,'prov:')
+    end
+    
+    #if entity == "prov:Entity"
+    #  entity = "schema.org:CreativeWork"
+    #end
+    #if datatype == "prov:Entity"
+    #  datatype = "schema.org:Thing"
+    #end
 
-  unless property_params["range"].nil?
-    datatype = property_params["range"]["_rdf:resource"].gsub(/http:\/\/www.w3.org\/ns\/prov#/,'prov:') 
-    datatype = datatype.gsub(/http:\/\/www.w3.org\/2001\/XMLSchema#(\w+)/) { |match| "#{$1[0].upcase}#{$1[1..]}" }
-  end
-  unless property_params["domain"].nil?
-    entity = property_params["domain"]["_rdf:resource"].gsub(/http:\/\/www.w3.org\/ns\/prov#/,'prov:')
-  end
-  
-  #if entity == "prov:Entity"
-  #  entity = "schema.org:CreativeWork"
-  #end
-  #if datatype == "prov:Entity"
-  #  datatype = "schema.org:Thing"
-  #end
+    name = "prov:#{ property_params["label"] }"
 
-  name = "prov:#{ property_params["label"] }"
+    @logger.info  "#{name} is property of #{entity} and can have values of type #{datatype}"
+    if entity.nil?
+      raise "no entity" 
+    end
 
-  @logger.info  "#{name} is property of #{entity} and can have values of type #{datatype}"
-  if entity.nil?
-    raise "no entity" 
-  end
+    if @datamodel[entity.to_sym].nil?
+      @datamodel[entity.to_sym] = []
+    end
+    already_in_datamodel = @datamodel[entity.to_sym].select { |s| s[:name] == name}
 
-  if @datamodel[entity.to_sym].nil?
-    @datamodel[entity.to_sym] = []
-  end
-  already_in_datamodel = @datamodel[entity.to_sym].select { |s| s[:name] == name}
-
-  if already_in_datamodel.empty?
-    @datamodel[entity.to_sym] << {
-      Name: name,
-      Description: property_params["Description"] .gsub('\n',''),
-      "MIN": nil,
-      "MAX": nil,
-      sameAs: "prov:#{ property_params["label"] }",
-      datatype: datatype, # .join(','),
-      Remark: nil
-    }
-  else
-    @logger.info  "already_in_datamodel: #{name}"
-    pp @datamodel
-    pp "already_in_datamodel #{already_in_datamodel}"
+    if already_in_datamodel.empty?
+      @datamodel[entity.to_sym] << {
+        Name: name,
+        Description: property_params["Description"] .gsub('\n',''),
+        "MIN": nil,
+        "MAX": nil,
+        sameAs: "prov:#{ property_params["label"] }",
+        datatype: datatype, # .join(','),
+        Remark: nil
+      }
+    else
+      @logger.info  "already_in_datamodel: #{name}"
+      pp @datamodel
+      pp "already_in_datamodel #{already_in_datamodel}"
+      exit
+    end
+  rescue StandardError => e
+    pp e
     exit
   end
 end

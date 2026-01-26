@@ -1,14 +1,16 @@
 #encoding: UTF-8
 
 require 'rest-client'
+require 'mustache'
 
 require_relative './helpers/data_model_types'
 require_relative './helpers/data_model_properties'
+require_relative './helpers/json_path_pruner'
 require_relative './loader'
 require_relative './config'
 
 DEFAULT_TYPE_KEY = "@type"
-DEFAULT_VOCABULARY  = "https://schema.org/"
+DEFAULT_VOCABULARY  = "http://schema.org/"
 
 
 VOCABULARIES= {
@@ -17,13 +19,12 @@ VOCABULARIES= {
   "dc"     => "http://purl.org/dc/elements/1.1/",
   "schema" => "http://schema.org/",
   "skos"   => "http://www.w3.org/2004/02/skos/core#",
-  "dc11"   => "http://purl.org/dc/terms/",
+  "dcterm"   => "http://purl.org/dc/terms/",
   "xsd"    => "http://www.w3.org/2001/XMLSchema#",
   "sh"     => "http://www.w3.org/ns/shacl#",
   "rdf"    => "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
   "time"   => "http://www.w3.org/2006/time#"
 }
-
 
 class DataModelBuilder
   attr_reader :datamodel, :types, :config
@@ -34,7 +35,7 @@ class DataModelBuilder
     @log_file = STDOUT
 
     @index = index
-    @datamodel = { _ENTITIES: [] }
+    @datamodel = { _ENTITIES: [], _DATATYPES: [] }
     @type_fields = [ { path: DEFAULT_TYPE_KEY, nested: nil}]
     @types = [DEFAULT_TYPE_KEY]
     @context = {}
@@ -42,11 +43,18 @@ class DataModelBuilder
     @used_vocabularies = []
     @default_vocabulary = DEFAULT_VOCABULARY
     @default_prefix = VOCABULARIES.select{|key, value| value == @default_vocabulary}.keys.first
+    @known_props_in_datamodel = []
 
     get_config
 
     if index.nil?
       @index = @config[:es_index]
+      @predefined_properties  = parse_by_extension( @config[:datamodel][:predefined_properties])
+      @excluded_properties    = parse_by_extension( @config[:datamodel][:excluded_properties])
+      @predefined_types       = parse_by_extension( @config[:datamodel][:predefined_types] )
+      @predefined_type_fields = parse_by_extension( @config[:datamodel][:predefined_type_fields])
+      
+      @datamodel[:_DATATYPES] = @predefined_types
     end
 
   end
@@ -63,18 +71,31 @@ class DataModelBuilder
       @logger.info "Ontology loaded for #{voc_key}"
     }
 
+    admin_files = ["_METADATA.csv","_README.csv","_REFERENCES.csv"]
+    admin_files.each do |filename|
+      File.join(@config[:datamodel][:datamodel_config_path], filename)
+      File.join(@config[:datamodel][:output_dir], filename)
+      FileUtils.cp(File.join(@config[:datamodel][:datamodel_config_path], filename), File.join(@config[:datamodel][:output_dir], filename))
+    end
+
     pp "===> FETCH AND FILTER MAPPINGS from index #{@config[:es_index]}"
     properties = fetch_and_filter_mappings
+    
     pp "===> GET FIELD FROM MAPPINGS THAT COULD CONTAIN A TYPE (all fields with @type in the key) from index #{@config[:es_index]}"
     get_type_properties(properties: properties)
-    @type_fields.reject! { |r| /inLanguage.@type$|memberOf.@type$/.match(r[:path]) }
+    
+    #pp Regexp.union(  @predefined_types.keys.map { |s| /#{Regexp.escape(s)}$/ })
+    #@type_fields.reject! { |r| Regexp.union(  @predefined_types.keys.map { |s| /#{Regexp.escape(s)}$/ }).match(r[:path]) }
+
     # pp @type_fields
     pp "===> PREPARE AGGREGATIONS"
     prepare_aggregations
 
     pp "===> GET TYPE AGGREGATIONS"
-    #fetch_types_from_aggregations
+    fetch_types_from_aggregations
 
+
+=begin
     @types = [
       "NewsArticle",
       "ArchiveComponent",
@@ -110,14 +131,35 @@ class DataModelBuilder
       "prov:Agent",
       "Thing"
     ]
-
+=end
     # Create @datamodel[:_ENTITIES] containing all @type/entity-descriptions 
     process_all_types
 
+    @datamodel[:_DATATYPES] = @datamodel[:_DATATYPES].concat @types.map { |type|
+      {
+        :baseDataTypes => "",
+        :Description => "",
+        :AllDatatypes => type,
+        :EntityRange => "",
+        :EntityCount => "",
+        :Example => ""
+      }
+    }
+
     @logger.info "Process properties of ElasticSearch Mapping"
+    # ====> FIRST DO SOMETHING WITH  @predefined_properties
+    @predefined_properties.each { |k,v|
+      @datamodel[k.to_sym] = v.values
+      @known_props_in_datamodel.concat (v.keys) 
+    }
+
+
+
     process_properties(properties: properties, parent_prop: nil)
-    @logger.info "Export Entities to csv"
-    export_entities_to_csv
+    @logger.info "Export _-admin fields to csv (_DATATYPES,_ENTITIES,_PREFIXES)"
+    # export_entities_to_csv
+  
+    export_metadata_to_csv
     @logger.info "Export datamodel to csv"
     export_datamodel_to_csv
     @logger.info "DATAMODEL CSV FILES ARE CREATED"
@@ -143,14 +185,30 @@ class DataModelBuilder
     @logger.debug("command_line_options: #{ command_line_options} " )  
   end
 
-  # Load in the configuration file details, setting many object attributes.
-  # def get_system_config(config_file = @config.config_file() ) 
-  def get_system_config() 
-    @config ||= Config
 
-    @config.path = "#{File.dirname(__FILE__)}/../../config/"
-    @config.config_file = @config_file
+  def get_system_config
+    @config_class ||= Config
+    @config_class.path        = File.expand_path("../../config", __dir__)
+    @config_class.config_file = @config_file
 
+    init_config = @config_class.keys.to_h { |k| [k, @config_class[k]] }
+
+    # Optional shallow dup for common mutable types
+    init_config.transform_values! do |v|
+      case v
+      when String, Array, Hash then v.dup
+      else v
+      end
+    end
+
+    begin
+      # Roundtrip only once if you need to allow nested structures via template expansion
+      rendered_json = Mustache.render(JSON.generate(init_config), init_config)
+      @config = JSON.parse(rendered_json, symbolize_names: true)
+    rescue JSON::ParserError, Mustache::Parser::SyntaxError => e
+      # Add context then re-raise
+      raise e.class, "Config rendering failed: #{e.message}"
+    end
   end
 
   def get_command_line_options
@@ -194,12 +252,13 @@ class DataModelBuilder
     @default_prefix = VOCABULARIES.select{|key, value| value == @default_vocabulary}.keys.first
     @prefixes << @default_prefix
 
+
     @context.each { |c_k, c_v|
       unless c_k.match(/^@/)
         if c_k.match(/:/)
           pp "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
           pp "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
-          pp "Handle this from @context"
+          pp "Handle this from @context "
           pp "#{c_k} ===>> #{c_v}"
           pp "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
         else
@@ -215,6 +274,15 @@ class DataModelBuilder
     
     @prefixes.uniq!.sort!
     @logger.debug("Used prefixes #{@prefixes }")
+
+    @datamodel[:_PREFIXES] = VOCABULARIES.map do |prefix, uri|
+      {
+        :Base   => "",
+        :Prefix => prefix,
+        :URI    => uri
+      }
+    end
+
   end
 
   def setup_loader
@@ -225,7 +293,11 @@ class DataModelBuilder
 
   def fetch_and_filter_mappings
     mappings = @loader.get_es_mappings(@index)
-    mappings["properties"].select { |k, _| k !~ /-Latn_/ && k !~ /^_/ }
+    properties = mappings["properties"]
+
+    JsonPathPruner.prune!( properties, @excluded_properties)
+
+    properties
   end
 
   #def get_type_properties(properties:)
@@ -235,10 +307,13 @@ class DataModelBuilder
   #end
 
   def prepare_aggregations
-    @type_fields.reject! { |r| ["comment.inLanguage.@type", "contributor.memberOf.@type"].include?(r) }
+   
+    # pp Regexp.union(  @predefined_type_fields.keys.map { |s| /^#{Regexp.escape(s)}$/ })
+    @type_fields.reject! { |r| Regexp.union(  @predefined_type_fields.keys.map { |s| /^#{Regexp.escape(s)}$/ }).match(r[:path]) }
+   
+    #pp @type_fields
 
     @aggs = {}
-
     @type_fields.each do |type|
       if type[:nested].nil?
         @aggs[type[:path]] = {
@@ -274,20 +349,26 @@ class DataModelBuilder
 
   def get_context
     hits = @loader.search(
-      index: "icandid",
+      index: @index,
       body: {
         _source: "@context",
         size: 1,
         query: { match_all: {} }
       }
     )
-    
     @context = hits["hits"]["hits"].first["_source"]["@context"]
+
+    if @context.is_a?(Array)
+      @context.reject!{ |e| e == {"schema" => "schema.org"} }
+      @context = @context.first
+    end
+    @context
+
   end
 
   def fetch_types_from_aggregations
     aggregations = @prod_loader.search(
-      index: "icandid",
+      index: @index,
       body: {
         size: 0,
         track_total_hits: true,
@@ -305,14 +386,12 @@ class DataModelBuilder
       
     end
 
-    @types = types.compact.uniq.sort << "Thing"
-    pp @types
-  end
+    types = types.concat( @predefined_type_fields.values.flatten )
+    @types = types.compact.uniq.sort
 
-  #def process_properties(properties:, parent_prop:)
-    # Assuming this is a method defined elsewhere
-  #  ::process_properties(properties: properties, parent_prop: parent_prop)
-  #end
+    @types
+
+  end
 
   def export_entities_to_csv
     csv_column_names = @datamodel[:_ENTITIES].map(&:keys).max_by(&:size)
@@ -330,6 +409,41 @@ class DataModelBuilder
     end
     @datamodel.delete(:_ENTITIES)
   end
+
+  def export_metadata_to_csv
+    metadata_fields = [:_DATATYPES,:_ENTITIES,:_PREFIXES]
+    
+    @datamodel[:_PREFIXES].map! { |p| 
+      if p[:Prefix] == @default_prefix
+        p[:Base] = '*'
+      end
+      p
+    }
+
+    metadata_fields.each do |field|
+      csv_column_names = @datamodel[field].map(&:keys).max_by(&:size)
+      # pp "csv_column_names : #{csv_column_names}"
+      props = @datamodel[field]
+
+      props.map! { |p| 
+        if p.has_key?( :Name )
+          p[:Name] = p[:Name].gsub( /^#{@default_prefix}:/, '' ) 
+        end
+        p
+      }
+
+      csv_data = CSV.generate do |csv|
+        csv << csv_column_names
+        props.each { |x| csv << x.values }
+      end
+      pp "--------------------------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+      File.open(File.join( @config[:datamodel][:output_dir], "#{field.to_s}.csv"), "w") do |file|
+        file.write(csv_data)
+      end
+      @datamodel.delete(field)
+    end
+  end
+  
 
   def export_datamodel_to_csv
     @datamodel.each do |entity, props|

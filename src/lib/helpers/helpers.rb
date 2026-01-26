@@ -1,4 +1,6 @@
 #encoding: UTF-8 
+require 'find'
+require 'set'
 
 class Array
   def uniqBeginString
@@ -21,6 +23,45 @@ class Array
     array
   end
 end
+
+def select_files_dir(base_dir:, file_name_pattern:, last_parsing_datetime: nil)
+
+  @logger.debug("Select files from: #{base_dir}")
+  @logger.debug("Select files with filename pattern: #{file_name_pattern}")
+  @logger.debug("Select files with last_parsing_datetime: #{last_parsing_datetime}")
+
+  last_parsing_datetime = Time.parse(last_parsing_datetime.strip) if last_parsing_datetime
+  pattern_regex = Regexp.new(file_name_pattern)
+  files = Set.new
+
+  unless Dir.exist?(base_dir)
+     @logger.warn(" No such directory - #{base_dir}")
+    return [] 
+  end
+
+  Find.find(base_dir) do |path|
+    # Skip 'processed' directories unless already in one
+    if File.directory?(path)
+      if path.match?(%r{/processed(/|$)}) && !base_dir.match?(%r{/processed(/|$)})
+        @logger.debug("Skipping processed directory: #{path}")
+        Find.prune # Do not descend into this directory
+      end
+      next
+    end
+
+    # Skip files that don't match the pattern
+    next unless pattern_regex.match?(File.basename(path))
+
+    # Skip files older than last_parsing_datetime
+    next if last_parsing_datetime && last_parsing_datetime >= File.mtime(path)
+
+    files << path
+  end
+
+  @logger.debug("Number of selected files to process: #{files.size}")
+  files.to_a
+end
+
 
 def canonicalize(object)
   case object
@@ -104,4 +145,45 @@ def xml_to_hash(data, options = {})
   xml_typecast = options.with_indifferent_access.key?('xml_typecast') ? options.with_indifferent_access['xml_typecast'] : true
   nori = Nori.new(parser: :nokogiri, advanced_typecasting: xml_typecast, strip_namespaces: true, convert_tags_to: lambda { |tag| tag.gsub(/^@/, '_') })
   nori.parse(data)
+end
+
+
+
+def parse_by_extension(path, headers: :first_row)
+  ext = File.extname(path).downcase
+
+  case ext
+  when ".json"
+    begin
+      content = File.read(path, encoding: "UTF-8")
+      #return { type: :json, data: JSON.parse(content) }
+      return JSON.parse(content)
+    rescue JSON::ParserError => e
+      raise ArgumentError, "File extension says JSON, but content is not valid JSON: #{e.message}"
+    end
+
+  when ".csv"
+    begin
+      rows = CSV.read(path,
+        headers: headers == :first_row,
+        return_headers: false,
+        skip_blanks: true,
+        encoding: "UTF-8"
+      )
+      parsed =
+        if headers == :first_row && rows.first.is_a?(CSV::Row)
+          rows.map(&:to_h)
+        else
+          rows
+        end
+
+      #return { type: :csv, data: parsed }
+      return parsed
+    rescue CSV::MalformedCSVError => e
+      raise ArgumentError, "File extension says CSV, but content is not valid CSV: #{e.message}"
+    end
+
+  else
+    raise ArgumentError, "Unsupported file type: #{ext}. Only .json and .csv are allowed."
+  end
 end

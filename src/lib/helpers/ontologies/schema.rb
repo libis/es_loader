@@ -1,7 +1,7 @@
 #encoding: UTF-8
 
 def load_schema_ontology
-  url = 'https://schema.org/version/latest/schemaorg-current-https.jsonld'
+  url = 'https://schema.org/version/latest/schemaorg-current-http.jsonld'
   response = RestClient.get(url)
   @schema_org_jsonld = JSON.parse(response)
  
@@ -45,12 +45,13 @@ def process_schema_entity(entity:)
   end
 end
 
-def process_schema_property(property: nil)
+def process_schema_property(property: nil, mapping: nil)
   begin
     # prefix = "schema:"
     # property = property.start_with?(prefix) ? property : "#{prefix}#{property}"
     
     @logger.info  "get schema_org property: #{property}"
+
     property_params = @schema_org_jsonld["@graph"].select { |s| s["@id"] == property }
 
     unless property_params.size == 1
@@ -81,37 +82,38 @@ def process_schema_property(property: nil)
       end
       @logger.warn  " #{property} is part of multiple domainIncludes #{  domainIncludes }"  
       
-      unless domainIncludes.size == 1
-        unless [
-          "schema:caption",
-          "schema:encodingFormat",
-          "schema:height",
-          "schema:address",
-          "schema:startTime",
-          "schema:endTime",
-          "schema:interactionStatistic",
-          "schema:logo",
-          "schema:memberOf",
-          "schema:keywords",
-          "schema:actor",
-          "schema:director",
-          "schema:duration",
-          "schema:productionCompany",
-          "schema:musicBy",
-          "schema:addressCountry",
-          "schema:latitude",
-          "schema:longitude",
-          "schema:review",
-          "schema:provider",
-          "schema:wordCount",
-          "schema:itemListElement",
-          "schema:result"
-        ].include?(property)
+      pp "domainIncludes.size domainIncludes.sizedomainIncludes.size"
+    #   unless domainIncludes.size == 1
+    #     unless [
+    #       "schema:caption",
+    #       "schema:encodingFormat",
+    #       "schema:height",
+    #       "schema:address",
+    #       "schema:startTime",
+    #       "schema:endTime",
+    #       "schema:interactionStatistic",
+    #       "schema:logo",
+    #       "schema:memberOf",
+    #       "schema:keywords",
+    #       "schema:actor",
+    #       "schema:director",
+    #       "schema:duration",
+    #       "schema:productionCompany",
+    #       "schema:musicBy",
+    #       "schema:addressCountry",
+    #       "schema:latitude",
+    #       "schema:longitude",
+    #       "schema:review",
+    #       "schema:provider",
+    #       "schema:wordCount",
+    #       "schema:itemListElement",
+    #       "schema:result"
+    #     ].include?(property)
 
 
-          raise " #{property} is part of multiple domainIncludes #{ domainIncludes }" 
-        end
-      end
+    #       raise " #{property} is part of multiple domainIncludes #{ domainIncludes }" 
+    #     end
+    #   end
     end
   
     domainIncludes.each do |entity|
@@ -152,11 +154,35 @@ def process_schema_property(property: nil)
         end
       }
 
+      # ElasticSearch rule:
+      # - When a mapping property includes "@type", we treat the field as an object type.
+
+      if datatype.map { |d| d.split(":").first }.uniq .size > 1
+        pp datatype
+        pp datatype.map { |d| d.split(":").first }.uniq 
+
+        unless mapping.nil?
+          @logger.info  "input mapping: #{mapping}"
+          if mapping["properties"]&.key?("@type")
+            datatype.reject! { |d| d.match(/^xsd:/)} 
+          else
+            datatype.reject! { |d| d.match(/^schema:/)} 
+          end
+        end
+      end
+
       if datatype.empty?
-        pp "#{name} is property of #{entity} and can have values of type #{datatype}"
         pp property_params["schema:rangeIncludes"]
+        pp mapping["properties"].keys
+        raise "Error: no datatypes found for #{name} is property of #{entity}"
         exit
       end
+      
+
+
+
+
+
       @logger.info  "#{name} is property of #{entity} and can have values of type #{datatype}"
       already_in_datamodel = @datamodel[entity.to_sym].select { |s| s[:Name] == name}
 
@@ -173,32 +199,21 @@ def process_schema_property(property: nil)
       end
     end
   rescue => e
+    raise e
+    # if property.match?(/schema:[A-Za-z]{2}-[A-Za-z]{4}_.*/)
+    #   @logger.warn  "property \"#{property}\" is an 'admin'property. Not needed in the datamodel !!!"
+    # elsif 
+    #   property.match?(/schema:china-Hani_alternateName/) ||
+    #   property.match?(/schema:thailand-Thai_alternateName/) ||
+    #   property.match?(/schema:россия-Cyrl_alternateName/) 
     
-    if property.match?(/schema:[A-Za-z]{2}-[A-Za-z]{4}_.*/)
-      @logger.warn  "property \"#{property}\" is an 'admin'property. Not needed in the datamodel !!!"
-    elsif 
-      property.match?(/schema:china-Hani_alternateName/) ||
-      property.match?(/schema:thailand-Thai_alternateName/) ||
-      property.match?(/schema:россия-Cyrl_alternateName/) 
-    
-      @logger.warn  "property \"#{property}\" should not be created at all. Clean this up !!!"
-    else
-      raise e
-    end
+    #   @logger.warn  "property \"#{property}\" should not be created at all. Clean this up !!!"
+    # else
+    #   raise e
+    # end
   end
 
 end
-
-#
-#def get_schema_properties(entity:)
-#  return [] if entity.nil?
-#  @schema_org_jsonld["@graph"].select do |item|
-#    domain_includes = item['schema:domainIncludes']
-#    domain_includes = [domain_includes] unless domain_includes.is_a?(Array)
-#    domain_includes.any? { |d| d["@id"] == entity }
-#  end
-#end
-
 
 def scheme_extract_description(schema_entity)
   comment = schema_entity["rdfs:comment"]

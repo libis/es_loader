@@ -23,6 +23,7 @@ end
 
 
 def process_all_types
+
   @types.each do |type|
     @logger.info "Start processing #{type}"
   
@@ -33,9 +34,11 @@ def process_all_types
     end
 
     method_name = "process_#{prefix}_entity"
+
     entity = send(method_name, entity: "#{prefix}:#{type}")
 
   end
+
   @types = @datamodel[:_ENTITIES].map { |e| e[:Name] }
 
 end
