@@ -119,13 +119,7 @@ class Loader
     if @log_file == "stdout" || @log_file == "STDOUT"
       @log_file = STDOUT
     end
-
-    # @logger = Logger.new(@log_file)
-    @logger.debug("config_file: #{ @config_file} " )
-    @logger.debug("log_file: #{ @log_file} " )
-    @logger.debug("command_line_options: #{ @command_line_options} " )
-    @logger.debug("record_dirs_to_load: #{ @record_dirs_to_load} " )
-    
+   
     @mandatory_config.each do |m| 
       if @config[m].nil?
         @logger.error("Mandatory config #{m} is missing")
@@ -143,8 +137,15 @@ class Loader
       if Dir.glob(d).empty?
         d = (d.start_with?("/records/") || d.start_with?("/source_records")) ? d : "/records/#{d}"
       end
-      "#{d}/**/" 
+      #File.join(d, "**")
+      d
     end
+
+    # @logger = Logger.new(@log_file)
+    @logger.debug("config_file: #{ @config_file} " )
+    @logger.debug("log_file: #{ @log_file} " )
+    @logger.debug("command_line_options: #{ @command_line_options} " )
+    @logger.debug("record_dirs_to_load: #{ @record_dirs_to_load} " )
 
     @conf
 
@@ -518,6 +519,7 @@ END_OF_MESSAGE
       raise e
     end
   end
+
   def move_records(new_files_in_this_bulk)
     begin
       unless new_files_in_this_bulk.nil?
@@ -579,7 +581,8 @@ END_OF_MESSAGE
       @record_dirs_to_load.each do |records_dir|
         @logger.info "Start prepare/processsing files in #{records_dir} [#{lastrun} < File.mtime]"
 
-        files = Dir["#{records_dir}/*"].select { |jsonfile| jsonfile =~ @record_pattern && lastrun < File.mtime(jsonfile) }
+        # files = Dir["#{records_dir}/*"].select { |jsonfile| jsonfile =~ @record_pattern && lastrun < File.mtime(jsonfile) }
+        files = select_files_dir(base_dir: records_dir, file_name_pattern: @record_pattern, last_parsing_datetime: @last_run_updates)
       
         @logger.info " number of files to prepare/processsing : #{files.size}"
 
@@ -618,7 +621,6 @@ END_OF_MESSAGE
             files_to_process = files_ids[files_id]
 
             new_files_in_this_bulk.concat files_to_process.select { |f| f =~ /\/new\// } 
-
             jsondata = preprocess_records( files_to_process.sort)
 
             # Retrieve the records from ES and merge if it exists

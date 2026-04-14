@@ -202,6 +202,12 @@ class Loader
         retval['items'].each do |i|
           unless i['index']['error'].nil?
             error_message << "Error in bulk items #{i['index']['_id']} : i['update']['error']"
+            if i['index']['error']['type'] == "strict_dynamic_mapping_exception"
+              if unknown_field = i['index']['error']['reason'].match( /dynamic introduction of \[(.*)\] within/i)
+                pp "ID in the error message #{i['index']['_id']}"
+                pp jsondata.select{|doc| doc["@id"] == i['index']['_id']  } 
+              end
+            end
             raise "Error in bulk items : #{i}"
           end
         end

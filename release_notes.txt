@@ -33,3 +33,6 @@ VERSION_TAG
 ## v7.5.0_20251113 ##
 => update uuid
 => build datamodel (csv) from elasticsearch mapping
+
+## v7.5.0_20260123 ##
+=> update build datamodel (csv) from elasticsearch mapping

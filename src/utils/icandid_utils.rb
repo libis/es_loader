@@ -263,7 +263,7 @@ def create_record(jsondata)
       end
 
   end
-
+ 
   tillprocessingtime = Time.now.strftime("%Y-%m-%d %H:%M:%S")
   processingtime_time_frame = {
       "gte" => fromprocessingtime ,
@@ -275,7 +275,6 @@ def create_record(jsondata)
   jsondata.reject!{ |k,v| v.nil? || v.to_s.empty? }
 
   #pp jsondata.keys
-    
   jsondata = add_ids( jsondata )
   jsondata = add_uuid( jsondata )
 
@@ -319,7 +318,9 @@ def merge_json(data_array)
               # puts "equal #{key}"
               v1
             else
-             
+              if key === "@language"
+                raise "How to handle fields where the langauges between input and already available data in elasticsearch are different"
+              end
               if @config[:datamodel][:single_value_properties].include?(key)
                 # puts "inspect key #{key.inspect}"
                 v2
@@ -407,14 +408,21 @@ def add_ids( data, id = nil)
         property_list.map! { |p| data[p] }
         val_to_md5_hash = property_list.compact.first
         if val_to_md5_hash.nil?
+          pp "Missing Url in MediaObject. Only thumbnailUrl Available !!!"
           pp data
-          exit
+          # tijdelijk voor Europeana
+          unless data["@type"] == "MediaObject" && data["url"].nil?
+            raise "ERROR in val_to_md5_hash in add_ids of icandid_utils"
+            exit
+          end
         end
-        if val_to_md5_hash.is_a?(Array)
-          val_to_md5_hash = val_to_md5_hash.sort.first
+        unless val_to_md5_hash.nil?
+          if val_to_md5_hash.is_a?(Array)
+            val_to_md5_hash = val_to_md5_hash.sort.first
+          end
+          # pp "#{id}_#{data["@type"].upcase}_#{Digest::MD5.hexdigest(val_to_md5_hash)}"
+          data["@id"] = "#{id}_#{data["@type"].upcase}_#{ Digest::MD5.hexdigest(val_to_md5_hash) }"
         end
-        # pp "#{id}_#{data["@type"].upcase}_#{Digest::MD5.hexdigest(val_to_md5_hash)}"
-        data["@id"] = "#{id}_#{data["@type"].upcase}_#{ Digest::MD5.hexdigest(val_to_md5_hash) }"
       end
     end
   end
@@ -436,8 +444,8 @@ def add_uuid( data)
     uri = URI.decode_www_form_component("#{uuid_url.to_s}")
     http_response = http.follow.get(uri.to_s, {})
 
-    @logger.debug ("http_response status: #{http_response.status}")
-    @logger.debug ("http_response body: #{http_response.body}")
+    # @logger.debug ("http_response status: #{http_response.status}")
+    # @logger.debug ("http_response body: #{http_response.body}")
 
     uuid_data = JSON.parse( http_response.body.to_s )
 
