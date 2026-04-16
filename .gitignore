@@ -5,7 +5,8 @@ notes.txt
 config/*
 !config/example_config.yml
 src/test/*
-/.env_loader
+/.env_*
+!.env_*.example
 /elastic/*.csv
 /elastic/*/*.csv
 /elastic/*.json

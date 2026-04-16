@@ -36,3 +36,6 @@ VERSION_TAG
 
 ## v7.5.0_20260123 ##
 => update build datamodel (csv) from elasticsearch mapping
+
+## v7.5.0_20260414 ##
+=> error for strict_mapping

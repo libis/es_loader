@@ -1,4 +1,7 @@
 {
-    "refresh_interval" : "1s",
-    "number_of_replicas" : "1"
+  "number_of_shards": 6,
+  "number_of_replicas": 1,
+  "index.merge.scheduler.max_thread_count": 1,
+  "index.mapping.total_fields.limit": 3000,
+  "refresh_interval": "60s"
 }
