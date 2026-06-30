@@ -36,7 +36,7 @@ def process_properties(properties: {}, parent_prop: nil)
       if prop_value["properties"]&.key?("@type")
         # Special case: 
 
-        @logger.info "Processing nested properties for #{prop_key}"
+        @logger.info "Processing nested properties for #{prop_key} [parent: #{current_parent_prop}]"
         process_properties(properties: prop_value["properties"], parent_prop: current_parent_prop)
 
         pp "===> hier reverse of verwerken !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
@@ -68,7 +68,7 @@ def process_properties(properties: {}, parent_prop: nil)
         prefix, prop_key = @default_prefix, prop_key
       end
 
-      @logger.info "Process property #{prop_key} with prefix #{prefix}"
+      @logger.info "Process property #{prop_key} with prefix #{prefix}  [parent: #{current_parent_prop}]"
 
       unless @known_props_in_datamodel.include?("#{prefix}:#{prop_key}")
         if @default_prefix == prefix

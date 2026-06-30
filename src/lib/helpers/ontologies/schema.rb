@@ -49,10 +49,10 @@ def process_schema_property(property: nil, mapping: nil)
   begin
     # prefix = "schema:"
     # property = property.start_with?(prefix) ? property : "#{prefix}#{property}"
-    
-    @logger.info  "get schema_org property: #{property}"
 
     property_params = @schema_org_jsonld["@graph"].select { |s| s["@id"] == property }
+
+    @logger.info  "schema_org property_params for #{property}: #{property_params}"
 
     unless property_params.size == 1
       if property_params.size == 0
@@ -82,56 +82,78 @@ def process_schema_property(property: nil, mapping: nil)
       end
       @logger.warn  " #{property} is part of multiple domainIncludes #{  domainIncludes }"  
       
-      pp "domainIncludes.size domainIncludes.sizedomainIncludes.size"
-    #   unless domainIncludes.size == 1
-    #     unless [
-    #       "schema:caption",
-    #       "schema:encodingFormat",
-    #       "schema:height",
-    #       "schema:address",
-    #       "schema:startTime",
-    #       "schema:endTime",
-    #       "schema:interactionStatistic",
-    #       "schema:logo",
-    #       "schema:memberOf",
-    #       "schema:keywords",
-    #       "schema:actor",
-    #       "schema:director",
-    #       "schema:duration",
-    #       "schema:productionCompany",
-    #       "schema:musicBy",
-    #       "schema:addressCountry",
-    #       "schema:latitude",
-    #       "schema:longitude",
-    #       "schema:review",
-    #       "schema:provider",
-    #       "schema:wordCount",
-    #       "schema:itemListElement",
-    #       "schema:result"
-    #     ].include?(property)
+      pp "domainIncludes.size #{domainIncludes.size}"
+      #   unless domainIncludes.size == 1
+      #     unless [
+      #       "schema:caption",
+      #       "schema:encodingFormat",
+      #       "schema:height",
+      #       "schema:address",
+      #       "schema:startTime",
+      #       "schema:endTime",
+      #       "schema:interactionStatistic",
+      #       "schema:logo",
+      #       "schema:memberOf",
+      #       "schema:keywords",
+      #       "schema:actor",
+      #       "schema:director",
+      #       "schema:duration",
+      #       "schema:productionCompany",
+      #       "schema:musicBy",
+      #       "schema:addressCountry",
+      #       "schema:latitude",
+      #       "schema:longitude",
+      #       "schema:review",
+      #       "schema:provider",
+      #       "schema:wordCount",
+      #       "schema:itemListElement",
+      #       "schema:result"
+      #     ].include?(property)
 
 
-    #       raise " #{property} is part of multiple domainIncludes #{ domainIncludes }" 
-    #     end
-    #   end
+      #       raise " #{property} is part of multiple domainIncludes #{ domainIncludes }" 
+      #     end
+      #   end
     end
-  
+
     domainIncludes.each do |entity|
       #entity = entity["@id"].split(':')[1] 
       entity = entity["@id"]
       if @datamodel[entity.to_sym].nil?
         @datamodel[entity.to_sym] = []
       end
-        
+
+      @logger.warn  "entity #{entity} of domainIncludes: #{domainIncludes }"
+
       datatype = [property_params["schema:rangeIncludes"]]&.flatten.map { |r| r["@id"] }
       datatype = datatype.select { |s| s != "schema:TextObject"}
 
 
+      @logger.warn  "datatype #{datatype} of domainIncludes: #{domainIncludes }"
+
       # datatype.map! { |m| m.gsub(/^schema:/, "") }
-      known_datatypes = ["schema:Text","schema:Date","schema:DateTime","schema:URL","schema:Duration","schema:Distance","schema:Action","schema:Integer"]
+      known_datatypes = [
+        "schema:Text",
+        "schema:Date",
+        "schema:DateTime",
+        "schema:URL",
+        "schema:Duration",
+        "schema:Distance",
+        "schema:Action",
+        "schema:Integer",
+        "schema:Occupation",
+        "schema:InteractionCounter",
+        "schema:Comment",
+        "schema:Review",
+      ]
       known_datatypes = known_datatypes + @datamodel[:_ENTITIES].map { |m| m[:Name]} 
       
       datatype.select! { |s| known_datatypes.include?(s) } 
+
+
+      @logger.warn  "datatype #{datatype} of known_datatypes: #{known_datatypes }"
+
+
 
       datatype.map! { |d|
         case d      
@@ -149,6 +171,8 @@ def process_schema_property(property: nil, mapping: nil)
           "xsd:float"
         when "schema:Integer"
           "xsd:integer"          
+        when "schema:Occupation"
+          "schema:Occupation"
         else
           d
         end

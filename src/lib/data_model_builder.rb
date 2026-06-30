@@ -96,7 +96,6 @@ class DataModelBuilder
     pp "===> GET TYPE AGGREGATIONS"
     fetch_types_from_aggregations
 
-
 =begin
     @types = [
       "NewsArticle",
@@ -142,6 +141,7 @@ class DataModelBuilder
         :baseDataTypes => "",
         :Description => "",
         :AllDatatypes => type,
+
         :EntityRange => "",
         :EntityCount => "",
         :Example => ""
@@ -239,17 +239,28 @@ class DataModelBuilder
   end
 
   def setup_prefixes
+
     @config[:datamodel][:vocabularies].each { |k,v|
       VOCABULARIES[k.to_s] = v
     }
+    
     @prefixes = VOCABULARIES.keys
+  
+    @logger.debug("Available prefixes #{@prefixes }")
 
     get_context
+
+    @logger.debug("context #{@context }")
 
     if @context.has_key?("@vocab")
       @default_vocabulary = @context["@vocab"]
     end
-    
+
+
+    @default_vocabulary = "https://schema.org/"
+    @logger.debug("HARD CODED FOR RESILIENCE #{@default_vocabulary }")
+ 
+
     @used_vocabularies  = VOCABULARIES.select{|key, value| value == @default_vocabulary}
     @default_prefix = VOCABULARIES.select{|key, value| value == @default_vocabulary}.keys.first
     @prefixes << @default_prefix
@@ -463,6 +474,7 @@ class DataModelBuilder
         props.each { |x| csv << x.values }
       end
 
+       @logger.info "write csv to #{  File.join( @config[:datamodel][:output_dir], "#{entity_name}.csv") }"
       File.open( File.join( @config[:datamodel][:output_dir], "#{entity_name}.csv") , "w") do |file|
         file.write(csv_data)
       end
